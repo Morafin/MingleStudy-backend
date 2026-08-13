@@ -1,0 +1,21 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Raleway:wght@400;500;600;700;800&display=swap");
+
+:root {
+    color: #160029;
+    background: #f5e9e2;
+    font-family: "Raleway", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    background: #f5e9e2;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+}
