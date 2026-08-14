@@ -3,6 +3,7 @@ package com.minglestudy.event
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin(origins = ["*"])
 @RequestMapping("/api/events")
 class EventController(
     private val eventRepository: StudyEventRepository
