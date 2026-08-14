@@ -1,4 +1,3 @@
-cat << 'EOF' > src/main/kotlin/com/minglestudy/event/EventController.kt
 package com.minglestudy.event
 
 import org.springframework.web.bind.annotation.*
@@ -21,4 +20,3 @@ class EventController(
         return eventRepository.save(event)
     }
 }
-EOF
