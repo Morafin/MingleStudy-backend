@@ -9,5 +9,5 @@ import org.springframework.scheduling.annotation.EnableScheduling
 class MingleStudyApplication
 
 fun main(args: Array<String>) {
-	runApplication<MingleStudyApplication>(*args)
+    runApplication<MingleStudyApplication>(*args)
 }
