@@ -1,42 +1,30 @@
-import { useState } from "react";
-import { addUniversity, saveProfile, type StudentProfile, type University } from "../data/profileApi";
+import { useEffect, useState } from "react";
+import { addUniversity, saveProfile, searchUniversities, type StudentProfile, type University } from "../data/profileApi";
 
 type Props = { initData: string; profile: StudentProfile; onSaved: (profile: StudentProfile) => void; onCancel?: () => void };
 
-// Preset institutes shown at the top of the dropdown for quick selection.
-// Add more names here as you onboard more institutes.
-const PRESET_INSTITUTES = ["ISFT Institute"];
-
-const CUSTOM_VALUE = "__custom__";
+function formatStudentCount(count: number): string {
+  if (count === 0) return "No students yet — be the first";
+  if (count === 1) return "1 student studying here";
+  return `${count} students studying here`;
+}
 
 function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
   const [firstName, setFirstName] = useState(profile.firstName);
   const [lastName, setLastName] = useState(profile.lastName);
   const [bio, setBio] = useState(profile.bio ?? "");
-
-  const initialIsPreset = profile.university ? PRESET_INSTITUTES.includes(profile.university.name) : false;
-  const [dropdownValue, setDropdownValue] = useState<string>(
-      initialIsPreset ? (profile.university as University).name : profile.university ? CUSTOM_VALUE : ""
-  );
   const [universityQuery, setUniversityQuery] = useState(profile.university?.name ?? "");
+  const [universities, setUniversities] = useState<University[]>([]);
+  const [selectedUniversity, setSelectedUniversity] = useState<University | null>(profile.university);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
 
-  function handleDropdownChange(event: React.ChangeEvent<HTMLSelectElement>) {
-    const value = event.target.value;
-    setDropdownValue(value);
-    setError("");
-
-    if (value === "" || value === CUSTOM_VALUE) {
-      setUniversityQuery("");
-    } else {
-      // A preset was picked — just fill the query text with it.
-      // The actual University record is created/fetched on Save.
-      setUniversityQuery(value);
-    }
-  }
-
-  const showCustomInput = dropdownValue === CUSTOM_VALUE;
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      searchUniversities(initData, universityQuery).then(setUniversities).catch(() => setUniversities([]));
+    }, 180);
+    return () => window.clearTimeout(timer);
+  }, [initData, universityQuery]);
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -45,15 +33,17 @@ function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
 
     setSaving(true); setError("");
     try {
-      const university = await addUniversity(initData, universityQuery.trim());
+      const university = selectedUniversity ?? await addUniversity(initData, universityQuery.trim());
       onSaved(await saveProfile(initData, { firstName: firstName.trim(), lastName: lastName.trim(), bio, universityId: university.id }));
     } catch (err) {
-      // Show the real reason instead of a generic message — no dev tools needed inside Telegram.
       setError(err instanceof Error ? err.message : "We could not save your profile. Please try again.");
     } finally {
       setSaving(false);
     }
   }
+
+  const showResults = universityQuery.trim() && !selectedUniversity;
+  const hasExactMatch = universities.some((university) => university.name.toLowerCase() === universityQuery.trim().toLowerCase());
 
   return (
       <section className="profile-form-shell">
@@ -66,20 +56,43 @@ function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
 
           <label>
             University
-            <select value={dropdownValue} onChange={handleDropdownChange}>
-              <option value="">Select your university</option>
-              {PRESET_INSTITUTES.map((name) => <option key={name} value={name}>{name}</option>)}
-              <option value={CUSTOM_VALUE}>Other (type it in)…</option>
-            </select>
+            <input
+                value={universityQuery}
+                maxLength={180}
+                placeholder="Start typing your university name"
+                onChange={(event) => { setUniversityQuery(event.target.value); setSelectedUniversity(null); }}
+            />
           </label>
 
-          {showCustomInput && (
-              <input
-                  value={universityQuery}
-                  maxLength={180}
-                  placeholder="Enter your university"
-                  onChange={(event) => setUniversityQuery(event.target.value)}
-              />
+          {selectedUniversity && (
+              <p className="university-selected-hint">{formatStudentCount(selectedUniversity.studentCount)}</p>
+          )}
+
+          {showResults && (
+              <div className="university-results">
+                {universities.map((university) => (
+                    <button
+                        type="button"
+                        key={university.id}
+                        onClick={() => { setSelectedUniversity(university); setUniversityQuery(university.name); }}
+                    >
+                      <span className="university-result-name">{university.name}</span>
+                      <span className="university-result-count">{formatStudentCount(university.studentCount)}</span>
+                    </button>
+                ))}
+                {!hasExactMatch && (
+                    <button
+                        type="button"
+                        onClick={async () => {
+                          const university = await addUniversity(initData, universityQuery.trim());
+                          setSelectedUniversity(university);
+                          setUniversityQuery(university.name);
+                        }}
+                    >
+                      Add "{universityQuery.trim()}"
+                    </button>
+                )}
+              </div>
           )}
 
           <label>Bio <span>Optional</span><textarea value={bio} maxLength={500} placeholder="What are you studying or hoping to learn?" onChange={(event) => setBio(event.target.value)} /></label>

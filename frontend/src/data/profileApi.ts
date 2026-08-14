@@ -1,4 +1,4 @@
-export type University = { id: number; name: string; country: string };
+export type University = { id: number; name: string; country: string; studentCount: number };
 export type StudentProfile = {
   telegramId: number;
   firstName: string;

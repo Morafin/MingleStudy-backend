@@ -10,6 +10,9 @@ import "./styles/dashboard.css";
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
+  // Newer API (Bot API 8.0+) that removes Telegram's own UI chrome around
+  // the app on clients that support it. Optional since older clients won't have it.
+  requestFullscreen?: () => void;
   initData: string;
   initDataUnsafe?: { user?: { first_name?: string; last_name?: string; photo_url?: string } };
 }
@@ -52,25 +55,25 @@ function App() {
 
   if (showProfileForm) {
     return (
-      <main className="app">
-        <ProfileForm
-          initData={initData}
-          profile={activeProfile}
-          onSaved={(savedProfile) => { setProfile(savedProfile); setEditingProfile(false); }}
-          onCancel={profile?.onboardingComplete ? () => setEditingProfile(false) : undefined}
-        />
-      </main>
+        <main className="app">
+          <ProfileForm
+              initData={initData}
+              profile={activeProfile}
+              onSaved={(savedProfile) => { setProfile(savedProfile); setEditingProfile(false); }}
+              onCancel={profile?.onboardingComplete ? () => setEditingProfile(false) : undefined}
+          />
+        </main>
     );
   }
 
   return (
-    <main className="app">
-      {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
-      <Header firstName={activeProfile.firstName} photoUrl={activeProfile.photoUrl ?? undefined} onProfileClick={() => setEditingProfile(true)} />
-      <StudyHero />
-      <StudyGroups />
-      <PeopleStudying />
-    </main>
+      <main className="app">
+        {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
+        <Header firstName={activeProfile.firstName} photoUrl={activeProfile.photoUrl ?? undefined} onProfileClick={() => setEditingProfile(true)} />
+        <StudyHero />
+        <StudyGroups />
+        <PeopleStudying />
+      </main>
   );
 }
 
