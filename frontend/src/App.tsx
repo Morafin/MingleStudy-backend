@@ -4,6 +4,7 @@ import ProfileForm from "./components/ProfileForm";
 import StudyHero from "./components/StudyHero";
 import StudyGroups from "./components/StudyGroups";
 import PeopleStudying from "./components/PeopleStudying";
+import StudyCalendar from "./components/StudyCalendar"; // <--- Added
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
 
 // Modular CSS imports replacing dashboard.css
@@ -12,12 +13,11 @@ import "./styles/sidebar.css";
 import "./styles/hero.css";
 import "./styles/study-groups.css";
 import "./styles/profile-form.css";
+import "./styles/calendar.css"; // <--- Added
 
 interface TelegramWebApp {
   ready: () => void;
   expand: () => void;
-  // Newer API (Bot API 8.0+) that removes Telegram's own UI chrome around
-  // the app on clients that support it. Optional since older clients won't have it.
   requestFullscreen?: () => void;
   initData: string;
   initDataUnsafe?: { user?: { first_name?: string; last_name?: string; photo_url?: string } };
@@ -99,6 +99,7 @@ function App() {
           <StudyHero />
           <StudyGroups />
           <PeopleStudying />
+          <StudyCalendar />
         </main>
       </div>
   );

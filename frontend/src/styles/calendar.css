@@ -1,0 +1,245 @@
+.calendar-section {
+    margin-bottom: 36px;
+}
+
+.calendar-card {
+    padding: 20px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+}
+
+.calendar-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 18px;
+}
+
+.calendar-header h3 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.calendar-nav-btn {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    place-items: center;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--ink);
+    background: var(--card-alt);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.calendar-nav-btn:hover {
+    background: var(--bg-top);
+}
+
+.calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    text-align: center;
+}
+
+.weekday-header {
+    padding-bottom: 6px;
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.day-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    aspect-ratio: 1 / 1;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    color: var(--ink);
+    background: transparent;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.day-cell:not(.empty):hover {
+    border-color: var(--line);
+    background: var(--card-alt);
+}
+
+.day-cell.empty {
+    cursor: default;
+}
+
+.day-cell.today {
+    border-color: var(--accent);
+    color: var(--ink);
+    font-weight: 800;
+}
+
+.day-cell.selected {
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-weight: 800;
+}
+
+.event-dot {
+    position: absolute;
+    bottom: 5px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--ink);
+}
+
+.day-cell.selected .event-dot {
+    background: var(--accent-ink);
+}
+
+/* Agenda & Add Event Form Styling */
+.selected-day-events {
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.agenda-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.agenda-header h4 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.add-event-btn {
+    padding: 4px 10px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card-alt);
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.add-event-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card-alt);
+}
+
+.add-event-form input {
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 13px;
+}
+
+.add-event-form input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.add-event-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+.btn-primary {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 6px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.btn-secondary {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.event-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card-alt);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.event-time {
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.event-chip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card-alt);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.event-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-event-btn {
+    display: grid;
+    place-items: center;
+    width: 22px;
+    height: 22px;
+    border: none;
+    border-radius: 4px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 12px;
+    line-height: 1;
+    cursor: pointer;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.delete-event-btn:hover {
+    background: rgba(220, 38, 38, 0.15);
+    color: #dc2626;
+}

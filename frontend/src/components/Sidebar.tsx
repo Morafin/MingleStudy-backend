@@ -1,65 +1,70 @@
 type SidebarProps = {
     firstName: string;
     photoUrl?: string;
-    onProfileClick?: () => void;
-    onDashboardClick?: () => void; // Added new prop for home navigation
+    onProfileClick: () => void;
+    onDashboardClick: () => void;
 };
 
-function Sidebar({ firstName, photoUrl, onProfileClick, onDashboardClick }: SidebarProps) {
+export default function Sidebar({
+                                    firstName,
+                                    photoUrl,
+                                    onProfileClick,
+                                    onDashboardClick,
+                                }: SidebarProps) {
+    const handleCalendarClick = () => {
+        // Return to main dashboard first if editing profile
+        onDashboardClick();
+        // Scroll smoothly to calendar section
+        setTimeout(() => {
+            document.querySelector(".calendar-section")?.scrollIntoView({ behavior: "smooth" });
+        }, 50);
+    };
+
     return (
         <aside className="sidebar">
             <div className="sidebar-top">
-                {onProfileClick && (
-                    <button
-                        className="avatar sidebar-avatar bubble-button"
-                        aria-label="Edit profile"
-                        onClick={onProfileClick}
-                    >
-                        {photoUrl ? (
-                            <img
-                                src={photoUrl}
-                                alt={`${firstName}'s profile`}
-                            />
-                        ) : (
-                            firstName.slice(0, 1).toUpperCase()
-                        )}
-                    </button>
-                )}
+                <button className="sidebar-avatar bubble-button" onClick={onProfileClick}>
+                    {photoUrl ? (
+                        <img src={photoUrl} alt={firstName} />
+                    ) : (
+                        <span>{firstName.charAt(0).toUpperCase()}</span>
+                    )}
+                </button>
             </div>
 
             <div className="sidebar-greeting">
-                <p className="sidebar-eyebrow">MINGLESTUDY</p>
-                <p className="sidebar-name">Hi, {firstName} 👋</p>
-                <p className="sidebar-subtitle">
-                    Find your people. Learn together.
+                <p className="sidebar-eyebrow" onClick={onDashboardClick} style={{ cursor: "pointer" }}>
+                    MINGLESTUDY
                 </p>
+                <h2 className="sidebar-name">Hi, {firstName} 👋</h2>
+                <p className="sidebar-subtitle">Find your people. Learn together.</p>
             </div>
 
-            {/* New Navigation Section */}
             <nav className="sidebar-nav">
-                <button
-                    className="nav-item bubble-button"
-                    onClick={onDashboardClick}
-                    aria-label="Go to Dashboard"
-                >
-                    {/* Home SVG Icon */}
-                    <svg
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="home-icon"
-                    >
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                {/* Dashboard Button */}
+                <button className="nav-item bubble-button" onClick={onDashboardClick}>
+                    <svg className="home-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
-                    <span>Dashboard</span>
+                    Dashboard
+                </button>
+
+                {/* Calendar Button */}
+                <button className="nav-item bubble-button" onClick={handleCalendarClick}>
+                    <svg className="home-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Calendar
+                </button>
+
+                {/* Edit Profile Button */}
+                <button className="nav-item bubble-button" onClick={onProfileClick}>
+                    <svg className="home-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                    Profile
                 </button>
             </nav>
         </aside>
     );
 }
-
-export default Sidebar;
