@@ -1,8 +1,22 @@
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Raleway:wght@400;500;600;700;800&display=swap");
 
 :root {
-    color: #160029;
-    background: #f5e9e2;
+    /* Warm sage-and-caramel palette */
+    --bg-top: #e9edca;
+    --bg-mid: #fef9e1;
+    --bg-bottom: #faedcd;
+    --card: #fef9e1;
+    --card-alt: #fffdf6;
+    --ink: #3e3626;
+    --ink-soft: #8a7c5c;
+    --line: #cdd5ae;
+    --sage: #cdd5ae;
+    --tan: #faedcd;
+    --accent: #d3a373;
+    --accent-ink: #3e3626;
+
+    color: var(--ink);
+    background: var(--bg-mid);
     font-family: "Raleway", sans-serif;
 }
 
@@ -12,10 +26,115 @@
 
 body {
     margin: 0;
-    background: #f5e9e2;
+    background: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-mid) 45%, var(--bg-bottom) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
 }
 
 button {
     font: inherit;
     cursor: pointer;
+}
+
+/* Base App Layout */
+.app-shell {
+    display: flex;
+    min-height: 100vh;
+}
+
+.app {
+    flex: 1;
+    min-width: 0;
+    max-width: 720px;
+    min-height: 100vh;
+    margin: 0 auto;
+    padding: 32px 22px 56px;
+}
+
+/* Base Headings & Typography */
+.header,
+.section-heading,
+.group-card {
+    display: flex;
+    align-items: center;
+}
+
+.header {
+    margin-bottom: 38px;
+}
+
+.eyebrow {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+}
+
+h1, h2, h3, p {
+    margin-top: 0;
+}
+
+h1 {
+    margin-bottom: 6px;
+    color: var(--ink);
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+}
+
+.subtitle {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* Reusable Avatar Component */
+.avatar {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    padding: 0;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--card-alt);
+    background: var(--ink);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.avatar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    border-radius: inherit;
+    object-fit: cover;
+}
+
+/* Shared Status & Banner Styling */
+.status-message,
+.preview-banner {
+    color: var(--ink-soft);
+    font-size: 14px;
+}
+
+.preview-banner {
+    margin: 0 0 20px;
+    padding: 10px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--card);
+}
+
+/* Active Interactions */
+.bubble-button {
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.15s ease;
+}
+
+.bubble-button:active {
+    transform: scale(0.92);
 }

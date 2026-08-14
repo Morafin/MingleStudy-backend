@@ -1,11 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import Header from "./components/Header";
+import Sidebar from "./components/Sidebar";
 import ProfileForm from "./components/ProfileForm";
 import StudyHero from "./components/StudyHero";
 import StudyGroups from "./components/StudyGroups";
 import PeopleStudying from "./components/PeopleStudying";
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
-import "./styles/dashboard.css";
+
+// Modular CSS imports replacing dashboard.css
+import "./styles/global.css";
+import "./styles/sidebar.css";
+import "./styles/hero.css";
+import "./styles/study-groups.css";
+import "./styles/profile-form.css";
 
 interface TelegramWebApp {
   ready: () => void;
@@ -51,29 +57,50 @@ function App() {
   const activeProfile = profile ?? browserProfile;
   const showProfileForm = isTelegram && (!profile?.onboardingComplete || editingProfile);
 
-  if (loading) return <main className="app"><p className="status-message">Loading your MingleStudy profile…</p></main>;
+  const sidebar = (
+      <Sidebar
+          firstName={activeProfile.firstName}
+          photoUrl={activeProfile.photoUrl ?? undefined}
+          onProfileClick={() => setEditingProfile(true)}
+          onDashboardClick={() => setEditingProfile(false)}
+      />
+  );
+
+  if (loading) {
+    return (
+        <div className="app-shell">
+          {sidebar}
+          <main className="app"><p className="status-message">Loading your MingleStudy profile…</p></main>
+        </div>
+    );
+  }
 
   if (showProfileForm) {
     return (
-        <main className="app">
-          <ProfileForm
-              initData={initData}
-              profile={activeProfile}
-              onSaved={(savedProfile) => { setProfile(savedProfile); setEditingProfile(false); }}
-              onCancel={profile?.onboardingComplete ? () => setEditingProfile(false) : undefined}
-          />
-        </main>
+        <div className="app-shell">
+          {sidebar}
+          <main className="app">
+            <ProfileForm
+                initData={initData}
+                profile={activeProfile}
+                onSaved={(savedProfile) => { setProfile(savedProfile); setEditingProfile(false); }}
+                onCancel={profile?.onboardingComplete ? () => setEditingProfile(false) : undefined}
+            />
+          </main>
+        </div>
     );
   }
 
   return (
-      <main className="app">
-        {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
-        <Header firstName={activeProfile.firstName} photoUrl={activeProfile.photoUrl ?? undefined} onProfileClick={() => setEditingProfile(true)} />
-        <StudyHero />
-        <StudyGroups />
-        <PeopleStudying />
-      </main>
+      <div className="app-shell">
+        {sidebar}
+        <main className="app">
+          {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
+          <StudyHero />
+          <StudyGroups />
+          <PeopleStudying />
+        </main>
+      </div>
   );
 }
 

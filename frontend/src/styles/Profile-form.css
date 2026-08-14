@@ -1,0 +1,108 @@
+.profile-form-shell {
+    max-width: 520px;
+    margin: 28px auto;
+}
+
+.profile-form-shell h1 {
+    margin-bottom: 8px;
+}
+
+.profile-form {
+    display: grid;
+    gap: 17px;
+    margin-top: 28px;
+    padding: 22px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: var(--card);
+}
+
+.profile-form label {
+    display: grid;
+    gap: 7px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.profile-form label span {
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.profile-form input,
+.profile-form textarea {
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 10px;
+    color: var(--ink);
+    background: var(--card-alt);
+    font: inherit;
+    font-weight: 500;
+    box-sizing: border-box;
+}
+
+.profile-form textarea {
+    min-height: 92px;
+    resize: vertical;
+}
+
+.university-results {
+    display: grid;
+    margin-top: -12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    border-radius: 5px;
+}
+
+.university-results button {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    border: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 10px;
+    background: var(--card-alt);
+    text-align: left;
+}
+
+.university-result-name {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.university-result-count {
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.university-results button:last-child {
+    border-bottom: 0;
+}
+
+.university-results button:hover {
+    background: var(--bg-top);
+}
+
+.university-selected-hint {
+    margin: -8px 0 0;
+    color: var(--accent);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.form-error {
+    margin: 0;
+    color: #a12d2d;
+    font-size: 13px;
+}
+
+.form-actions {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
