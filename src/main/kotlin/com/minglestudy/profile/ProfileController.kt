@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.server.ResponseStatusException
 
-data class UniversityResponse(val id: Long, val name: String, val country: String)
+data class UniversityResponse(val id: Long, val name: String, val country: String, val studentCount: Long)
 data class ProfileResponse(
     val telegramId: Long,
     val firstName: String,
@@ -92,5 +92,7 @@ class ProfileController(
         telegramId, firstName, lastName, bio, telegramUsername, telegramPhotoUrl, university?.toResponse(), onboardingComplete,
     )
 
-    private fun University.toResponse() = UniversityResponse(requireNotNull(id), name, country)
+    private fun University.toResponse() = UniversityResponse(
+        requireNotNull(id), name, country, profiles.countByUniversity_Id(requireNotNull(id)),
+    )
 }
