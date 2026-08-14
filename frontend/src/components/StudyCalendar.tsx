@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import WebApp from "@twa-dev/sdk";
 
 interface StudyEvent {
     id: string;
@@ -64,20 +65,51 @@ export default function StudyCalendar() {
     const handlePrevMonth = () => setViewDate(new Date(year, month - 1, 1));
     const handleNextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
-    const handleAddEventSubmit = (e: React.FormEvent) => {
+    const handleAddEventSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!eventTitle.trim()) return;
 
+        const timeString = eventTime || "12:00";
+
+        // 1. Save locally in React state
         const newEvt: StudyEvent = {
             id: Date.now().toString(),
             title: eventTitle.trim(),
-            time: eventTime || "12:00",
+            time: timeString,
         };
 
         setEvents((prev) => ({
             ...prev,
             [selectedKey]: [...(prev[selectedKey] ?? []), newEvt],
         }));
+
+        // 2. Schedule Telegram notification via Spring Boot API
+        const telegramId = WebApp.initDataUnsafe?.user?.id;
+
+        if (telegramId) {
+            // Calculate start date & time as UTC ISO string
+            const [sYear, sMonth, sDay] = selectedKey.split("-").map(Number);
+            const [hours, minutes] = timeString.split(":").map(Number);
+            const startDateTime = new Date(sYear, sMonth - 1, sDay, hours, minutes);
+
+            try {
+                await fetch("https://minglestudy-backend-production.up.railway.app/api/events", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        telegramId: telegramId,
+                        title: eventTitle.trim(),
+                        startTime: startDateTime.toISOString(),
+                    }),
+                });
+            } catch (err) {
+                console.error("Failed to sync event with notification server:", err);
+            }
+        } else {
+            console.warn("Telegram User ID not available; event saved locally only.");
+        }
 
         setEventTitle("");
         setIsAdding(false);
