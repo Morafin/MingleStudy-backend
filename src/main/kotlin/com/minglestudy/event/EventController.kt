@@ -1,8 +1,10 @@
+cat << 'EOF' > src/main/kotlin/com/minglestudy/event/EventController.kt
 package com.minglestudy.event
 
 import org.springframework.web.bind.annotation.*
 
 @RestController
+@CrossOrigin(origins = ["*"])
 @RequestMapping("/api/events")
 class EventController(
     private val eventRepository: StudyEventRepository
@@ -19,3 +21,4 @@ class EventController(
         return eventRepository.save(event)
     }
 }
+EOF
