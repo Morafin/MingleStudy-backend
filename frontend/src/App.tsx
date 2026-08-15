@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import ProfileForm from "./components/ProfileForm";
 import StudyCalendar from "./components/StudyCalendar";
+import GroupsPage from "./components/GroupsPage";
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
 
 // Modular CSS imports replacing dashboard.css
@@ -9,6 +10,7 @@ import "./styles/global.css";
 import "./styles/sidebar.css";
 import "./styles/profile-form.css";
 import "./styles/calendar.css";
+import "./styles/groups.css";
 
 interface TelegramWebApp {
   ready: () => void;
@@ -30,6 +32,8 @@ declare global {
   interface Window { Telegram?: { WebApp?: TelegramWebApp } }
 }
 
+type View = "dashboard" | "groups";
+
 function App() {
   const telegram = window.Telegram?.WebApp;
   const initData = telegram?.initData ?? "";
@@ -37,6 +41,7 @@ function App() {
   const [profile, setProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(Boolean(initData));
   const [editingProfile, setEditingProfile] = useState(false);
+  const [view, setView] = useState<View>("dashboard");
   const isTelegram = Boolean(initData);
 
   const browserProfile = useMemo<StudentProfile>(() => ({
@@ -60,12 +65,23 @@ function App() {
   const activeProfile = profile ?? browserProfile;
   const showProfileForm = isTelegram && (!profile?.onboardingComplete || editingProfile);
 
+  const goToDashboard = () => {
+    setEditingProfile(false);
+    setView("dashboard");
+  };
+
+  const goToGroups = () => {
+    setEditingProfile(false);
+    setView("groups");
+  };
+
   const sidebar = (
       <Sidebar
           firstName={activeProfile.firstName}
           photoUrl={activeProfile.photoUrl ?? undefined}
           onProfileClick={() => setEditingProfile(true)}
-          onDashboardClick={() => setEditingProfile(false)}
+          onDashboardClick={goToDashboard}
+          onGroupsClick={goToGroups}
       />
   );
 
@@ -99,7 +115,11 @@ function App() {
         {sidebar}
         <main className="app">
           {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
-          <StudyCalendar />
+          {view === "dashboard" ? (
+              <StudyCalendar />
+          ) : (
+              <GroupsPage initData={initData} onEditProfile={() => setEditingProfile(true)} />
+          )}
         </main>
       </div>
   );

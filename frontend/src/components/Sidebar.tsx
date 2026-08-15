@@ -3,6 +3,7 @@ type SidebarProps = {
     photoUrl?: string;
     onProfileClick: () => void;
     onDashboardClick: () => void;
+    onGroupsClick: () => void;
 };
 
 export default function Sidebar({
@@ -10,6 +11,7 @@ export default function Sidebar({
                                     photoUrl,
                                     onProfileClick,
                                     onDashboardClick,
+                                    onGroupsClick,
                                 }: SidebarProps) {
     const handleCalendarClick = () => {
         // Return to main dashboard first if editing profile
@@ -55,6 +57,14 @@ export default function Sidebar({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 002-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     Calendar
+                </button>
+
+                {/* Groups Button */}
+                <button className="nav-item bubble-button" onClick={onGroupsClick}>
+                    <svg className="home-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4.13a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0m8 0v0a4 4 0 01-4 4H9a4 4 0 01-4-4v0" />
+                    </svg>
+                    Groups
                 </button>
 
                 {/* Edit Profile Button */}

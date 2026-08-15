@@ -10,8 +10,28 @@ export type StudentProfile = {
   onboardingComplete: boolean;
 };
 
+export type GroupMember = {
+  telegramId: number;
+  firstName: string;
+  lastName: string;
+  username: string | null;
+  photoUrl: string | null;
+  bio: string | null;
+};
+
+export type MyGroup = {
+  hasUniversity: boolean;
+  university: University | null;
+  memberCount: number;
+  members: GroupMember[];
+};
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
-const authHeaders = (initData: string) => ({ "Content-Type": "application/json", "X-Telegram-Init-Data": initData });
+
+const authHeaders = (initData: string) => ({
+  "Content-Type": "application/json",
+  "X-Telegram-Init-Data": initData,
+});
 
 async function request<T>(path: string, initData: string, options?: RequestInit): Promise<T> {
   let response: Response;
@@ -32,7 +52,10 @@ async function request<T>(path: string, initData: string, options?: RequestInit)
 }
 
 export const getMyProfile = (initData: string) => request<StudentProfile>("/api/me", initData);
-export const searchUniversities = (initData: string, query: string) => request<University[]>(`/api/universities?query=${encodeURIComponent(query)}`, initData);
-export const addUniversity = (initData: string, name: string) => request<University>("/api/universities", initData, { method: "POST", body: JSON.stringify({ name }) });
+export const searchUniversities = (initData: string, query: string) =>
+    request<University[]>(`/api/universities?query=${encodeURIComponent(query)}`, initData);
+export const addUniversity = (initData: string, name: string) =>
+    request<University>("/api/universities", initData, { method: "POST", body: JSON.stringify({ name }) });
 export const saveProfile = (initData: string, values: { firstName: string; lastName: string; bio: string; universityId: number }) =>
     request<StudentProfile>("/api/me", initData, { method: "PUT", body: JSON.stringify(values) });
+export const getMyGroup = (initData: string) => request<MyGroup>("/api/groups/mine", initData);
