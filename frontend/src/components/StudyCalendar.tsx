@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import WebApp from "@twa-dev/sdk";
 
 interface StudyEvent {
     id: string;
@@ -35,6 +34,11 @@ export default function StudyCalendar() {
     const [eventTitle, setEventTitle] = useState("");
     const [eventTime, setEventTime] = useState("16:00");
 
+    // Status feedback for the notification sync (visible in UI since Telegram WebView has no dev console)
+    const [submitError, setSubmitError] = useState<string | null>(null);
+    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+
     // Persistent storage initialization from LocalStorage
     const [events, setEvents] = useState<EventsMap>(() => {
         try {
@@ -69,6 +73,9 @@ export default function StudyCalendar() {
         e.preventDefault();
         if (!eventTitle.trim()) return;
 
+        setSubmitError(null);
+        setSubmitSuccess(null);
+
         const timeString = eventTime || "12:00";
 
         // 1. Save locally in React state
@@ -84,31 +91,60 @@ export default function StudyCalendar() {
         }));
 
         // 2. Schedule Telegram notification via Spring Boot API
-        const telegramId = WebApp.initDataUnsafe?.user?.id;
+        // NOTE: read directly from window.Telegram.WebApp rather than the @twa-dev/sdk
+        // import — the SDK's WebApp object was returning empty/stale initDataUnsafe,
+        // while window.Telegram.WebApp always has the live, correct data.
+        const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
 
-        if (telegramId) {
-            // Calculate start date & time as UTC ISO string
-            const [sYear, sMonth, sDay] = selectedKey.split("-").map(Number);
-            const [hours, minutes] = timeString.split(":").map(Number);
-            const startDateTime = new Date(sYear, sMonth - 1, sDay, hours, minutes);
+        if (!telegramId) {
+            setSubmitError(
+                "No Telegram user ID was found, so the reminder was NOT scheduled on the server. (The event is saved locally only.) This usually means the app wasn't opened inside a real Telegram chat."
+            );
+            setEventTitle("");
+            setIsAdding(false);
+            return;
+        }
 
-            try {
-                await fetch("https://minglestudy-backend-production.up.railway.app/api/events", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                    },
-                    body: JSON.stringify({
-                        telegramId: telegramId,
-                        title: eventTitle.trim(),
-                        startTime: startDateTime.toISOString(),
-                    }),
-                });
-            } catch (err) {
-                console.error("Failed to sync event with notification server:", err);
+        // Build the date/time using the device's local timezone, then convert to UTC for the server
+        const [sYear, sMonth, sDay] = selectedKey.split("-").map(Number);
+        const [hours, minutes] = timeString.split(":").map(Number);
+        const startDateTime = new Date(sYear, sMonth - 1, sDay, hours, minutes);
+        const startTimeUtc = startDateTime.toISOString();
+
+        setIsSubmitting(true);
+
+        try {
+            const res = await fetch("https://minglestudy-backend-production.up.railway.app/api/events", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    telegramId: telegramId,
+                    title: eventTitle.trim(),
+                    startTime: startTimeUtc,
+                }),
+            });
+
+            if (!res.ok) {
+                let bodyText = "";
+                try {
+                    bodyText = await res.text();
+                } catch {
+                    bodyText = "(could not read response body)";
+                }
+                setSubmitError(`Server rejected the event — status ${res.status}. ${bodyText}`);
+            } else {
+                setSubmitSuccess(`Reminder scheduled for ${startDateTime.toLocaleString()}.`);
             }
-        } else {
-            console.warn("Telegram User ID not available; event saved locally only.");
+        } catch (err) {
+            setSubmitError(
+                `Network error while contacting the server: ${
+                    err instanceof Error ? err.message : String(err)
+                }`
+            );
+        } finally {
+            setIsSubmitting(false);
         }
 
         setEventTitle("");
@@ -200,6 +236,8 @@ export default function StudyCalendar() {
                                 onClick={() => {
                                     setSelectedKey(currentTileKey);
                                     setIsAdding(false);
+                                    setSubmitError(null);
+                                    setSubmitSuccess(null);
                                 }}
                             >
                                 {dayNum}
@@ -217,12 +255,33 @@ export default function StudyCalendar() {
                             <button
                                 type="button"
                                 className="add-event-btn bubble-button"
-                                onClick={() => setIsAdding(true)}
+                                onClick={() => {
+                                    setIsAdding(true);
+                                    setSubmitError(null);
+                                    setSubmitSuccess(null);
+                                }}
                             >
                                 + Add Session
                             </button>
                         )}
                     </div>
+
+                    {/* Status messages */}
+                    {isSubmitting && (
+                        <p style={{ color: "#888", fontSize: "13px", marginTop: "8px" }}>
+                            Scheduling reminder…
+                        </p>
+                    )}
+                    {submitError && (
+                        <p style={{ color: "#e53935", fontSize: "13px", marginTop: "8px", wordBreak: "break-word" }}>
+                            ⚠️ {submitError}
+                        </p>
+                    )}
+                    {submitSuccess && (
+                        <p style={{ color: "#2e7d32", fontSize: "13px", marginTop: "8px" }}>
+                            ✅ {submitSuccess}
+                        </p>
+                    )}
 
                     {/* Form */}
                     {isAdding && (
@@ -249,7 +308,7 @@ export default function StudyCalendar() {
                                 >
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary bubble-button">
+                                <button type="submit" className="btn-primary bubble-button" disabled={isSubmitting}>
                                     Save
                                 </button>
                             </div>

@@ -20,7 +20,15 @@ interface TelegramWebApp {
   expand: () => void;
   requestFullscreen?: () => void;
   initData: string;
-  initDataUnsafe?: { user?: { first_name?: string; last_name?: string; photo_url?: string } };
+  initDataUnsafe?: {
+    user?: {
+      id?: number;
+      first_name?: string;
+      last_name?: string;
+      username?: string;
+      photo_url?: string;
+    };
+  };
 }
 
 declare global {
