@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import ProfileForm from "./components/ProfileForm";
 import StudyCalendar from "./components/StudyCalendar";
 import GroupsPage from "./components/GroupsPage";
+import WeeklyTimetable from "./components/WeeklyTimetable";
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
 
 // Modular CSS imports replacing dashboard.css
@@ -11,6 +12,7 @@ import "./styles/sidebar.css";
 import "./styles/profile-form.css";
 import "./styles/calendar.css";
 import "./styles/groups.css";
+import "./styles/timetable.css";
 
 interface TelegramWebApp {
   ready: () => void;
@@ -116,7 +118,10 @@ function App() {
         <main className="app">
           {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
           {view === "dashboard" ? (
-              <StudyCalendar />
+              <>
+                <StudyCalendar />
+                <WeeklyTimetable universityName={activeProfile.university?.name} />
+              </>
           ) : (
               <GroupsPage initData={initData} onEditProfile={() => setEditingProfile(true)} />
           )}

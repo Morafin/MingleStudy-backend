@@ -11,11 +11,8 @@ type EventsMap = Record<string, StudyEvent[]>;
 const STORAGE_KEY = "minglestudy_calendar_events";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const DEFAULT_EVENTS: EventsMap = {
-    "2026-08-14": [{ id: "1", title: "Discrete Math Prep", time: "16:00" }],
-    "2026-08-22": [{ id: "2", title: "Algorithmic Analysis Group", time: "18:30" }],
-    "2026-08-25": [{ id: "3", title: "OS Final Review", time: "14:00" }],
-};
+// No demo/placeholder events — the calendar starts empty for every student.
+const DEFAULT_EVENTS: EventsMap = {};
 
 const formatDateKey = (year: number, month: number, day: number) => {
     const m = String(month + 1).padStart(2, "0");
@@ -91,7 +88,7 @@ export default function StudyCalendar() {
         }));
 
         // 2. Schedule Telegram notification via Spring Boot API
-        // NOTE: read directly from window.Telegram.WebApp rather than the @twa-dev/sdk
+        // Read directly from window.Telegram.WebApp rather than the @twa-dev/sdk
         // import — the SDK's WebApp object was returning empty/stale initDataUnsafe,
         // while window.Telegram.WebApp always has the live, correct data.
         const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
