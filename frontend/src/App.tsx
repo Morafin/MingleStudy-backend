@@ -1,19 +1,14 @@
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import ProfileForm from "./components/ProfileForm";
-import StudyHero from "./components/StudyHero";
-import StudyGroups from "./components/StudyGroups";
-import PeopleStudying from "./components/PeopleStudying";
-import StudyCalendar from "./components/StudyCalendar"; // <--- Added
+import StudyCalendar from "./components/StudyCalendar";
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
 
 // Modular CSS imports replacing dashboard.css
 import "./styles/global.css";
 import "./styles/sidebar.css";
-import "./styles/hero.css";
-import "./styles/study-groups.css";
 import "./styles/profile-form.css";
-import "./styles/calendar.css"; // <--- Added
+import "./styles/calendar.css";
 
 interface TelegramWebApp {
   ready: () => void;
@@ -104,9 +99,6 @@ function App() {
         {sidebar}
         <main className="app">
           {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
-          <StudyHero />
-          <StudyGroups />
-          <PeopleStudying />
           <StudyCalendar />
         </main>
       </div>

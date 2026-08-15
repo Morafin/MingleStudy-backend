@@ -1,19 +1,19 @@
 @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Raleway:wght@400;500;600;700;800&display=swap");
 
 :root {
-    /* Warm sage-and-caramel palette */
-    --bg-top: #e9edca;
-    --bg-mid: #fef9e1;
-    --bg-bottom: #faedcd;
-    --card: #fef9e1;
-    --card-alt: #fffdf6;
-    --ink: #3e3626;
-    --ink-soft: #8a7c5c;
-    --line: #cdd5ae;
-    --sage: #cdd5ae;
-    --tan: #faedcd;
-    --accent: #d3a373;
-    --accent-ink: #3e3626;
+    /* Grayscale palette */
+    --bg-top: #ffffff;
+    --bg-mid: #f4f4f4;
+    --bg-bottom: #e7e7e7;
+    --card: #ffffff;
+    --card-alt: #f2f2f2;
+    --ink: #242424;
+    --ink-soft: #8a8a8a;
+    --line: #d1d1d1;
+    --sage: #d1d1d1;
+    --tan: #e7e7e7;
+    --accent: #b8863a;
+    --accent-ink: #ffffff;
 
     color: var(--ink);
     background: var(--bg-mid);
@@ -52,9 +52,7 @@ button {
 }
 
 /* Base Headings & Typography */
-.header,
-.section-heading,
-.group-card {
+.header, .section-heading, .group-card {
     display: flex;
     align-items: center;
 }
@@ -116,8 +114,7 @@ h1 {
 }
 
 /* Shared Status & Banner Styling */
-.status-message,
-.preview-banner {
+.status-message, .preview-banner {
     color: var(--ink-soft);
     font-size: 14px;
 }

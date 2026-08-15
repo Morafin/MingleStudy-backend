@@ -100,6 +100,8 @@
 }
 
 .nav-item {
+    --nav-accent: #8eb69b;
+
     display: flex;
     align-items: center;
     gap: 12px;
@@ -112,10 +114,19 @@
     font-size: 15px;
     font-weight: 600;
     text-align: left;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1),
+    background-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .nav-item:hover {
-    background: var(--card-alt);
+    background: color-mix(in srgb, var(--nav-accent) 18%, transparent);
+    color: var(--nav-accent);
+}
+
+.nav-item:active {
+    transform: scale(0.92);
+    background: color-mix(in srgb, var(--nav-accent) 28%, transparent);
 }
 
 .home-icon {
@@ -123,8 +134,9 @@
     height: 20px;
     flex-shrink: 0;
     color: var(--ink-soft);
+    transition: color 0.15s ease;
 }
 
 .nav-item:hover .home-icon {
-    color: var(--ink);
+    color: var(--nav-accent);
 }
