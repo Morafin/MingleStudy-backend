@@ -17,6 +17,7 @@ export type GroupMember = {
   username: string | null;
   photoUrl: string | null;
   bio: string | null;
+  lastSeenAt: string | null;
 };
 
 export type MyGroup = {
@@ -59,3 +60,26 @@ export const addUniversity = (initData: string, name: string) =>
 export const saveProfile = (initData: string, values: { firstName: string; lastName: string; bio: string; universityId: number }) =>
     request<StudentProfile>("/api/me", initData, { method: "PUT", body: JSON.stringify(values) });
 export const getMyGroup = (initData: string) => request<MyGroup>("/api/groups/mine", initData);
+
+// Turns a lastSeenAt ISO timestamp into a short human-readable activity label.
+// Returns null if there's nothing meaningful to show (no timestamp, or too long ago).
+export function getActivityStatus(lastSeenAt: string | null): { label: string; isRecent: boolean } | null {
+  if (!lastSeenAt) return null;
+
+  const lastSeenMs = new Date(lastSeenAt).getTime();
+  if (Number.isNaN(lastSeenMs)) return null;
+
+  const diffMs = Date.now() - lastSeenMs;
+  const diffMinutes = Math.floor(diffMs / 60_000);
+
+  if (diffMinutes < 2) return { label: "Active now", isRecent: true };
+  if (diffMinutes < 60) return { label: `Active ${diffMinutes}m ago`, isRecent: true };
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return { label: `Active ${diffHours}h ago`, isRecent: false };
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays < 7) return { label: `Active ${diffDays}d ago`, isRecent: false };
+
+  return null; // more than a week ago — not worth showing
+}

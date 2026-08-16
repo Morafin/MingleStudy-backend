@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import java.time.Instant
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -22,6 +23,7 @@ data class TelegramUser(
 class TelegramAuthService(
     @Value("\${minglestudy.telegram.bot-token}") private val botToken: String,
     private val jsonMapper: JsonMapper,
+    private val profiles: StudentProfileRepository,
 ) {
     fun verify(initData: String?): TelegramUser {
         if (initData.isNullOrBlank() || botToken.isBlank()) unauthorized()
@@ -41,13 +43,27 @@ class TelegramAuthService(
 
         val userJson = values["user"] ?: unauthorized()
         val user = jsonMapper.readTree(userJson)
-        return TelegramUser(
+        val telegramUser = TelegramUser(
             id = user.path("id").asLong(),
             firstName = user.path("first_name").asText(),
             lastName = user.path("last_name").asText().ifBlank { null },
             username = user.path("username").asText().ifBlank { null },
             photoUrl = user.path("photo_url").asText().ifBlank { null },
         )
+
+        touchLastSeen(telegramUser.id)
+
+        return telegramUser
+    }
+
+    // Only bumps lastSeenAt for profiles that already exist. New users get their
+    // row created by ProfileController.findOrCreate on their first /api/me call,
+    // so there's nothing to touch here yet for them.
+    private fun touchLastSeen(telegramId: Long) {
+        profiles.findById(telegramId).ifPresent {
+            it.lastSeenAt = Instant.now()
+            profiles.save(it)
+        }
     }
 
     private fun hmac(key: ByteArray, value: ByteArray): ByteArray =

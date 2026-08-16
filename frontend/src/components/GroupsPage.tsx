@@ -1,10 +1,25 @@
 import { useEffect, useState } from "react";
-import { getMyGroup, type MyGroup } from "../data/profileApi";
+import { getActivityStatus, getMyGroup, type MyGroup } from "../data/profileApi";
 
 type GroupsPageProps = {
     initData: string;
     onEditProfile: () => void;
 };
+
+function GroupsSkeleton() {
+    return (
+        <div className="groups-card">
+            <div className="skeleton skeleton-line medium" />
+            <div className="skeleton skeleton-line short" style={{ marginBottom: "18px" }} />
+            <div className="skeleton skeleton-line short" style={{ marginBottom: "12px" }} />
+            <div style={{ display: "grid", gap: "10px" }}>
+                {[0, 1, 2].map((i) => (
+                    <div key={i} className="skeleton" style={{ height: "58px", borderRadius: "8px" }} />
+                ))}
+            </div>
+        </div>
+    );
+}
 
 export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps) {
     const [group, setGroup] = useState<MyGroup | null>(null);
@@ -41,7 +56,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                 <div className="section-heading">
                     <h2>Groups</h2>
                 </div>
-                <p className="status-message">Loading your group…</p>
+                <GroupsSkeleton />
             </section>
         );
     }
@@ -64,6 +79,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                     <h2>Groups</h2>
                 </div>
                 <div className="groups-card groups-empty-state">
+                    <span className="empty-state-icon">🎓</span>
                     <h3>No university set yet</h3>
                     <p className="subtitle">
                         Add your university to your profile and we'll automatically show you everyone else studying there.
@@ -93,35 +109,58 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                 </div>
 
                 {members.length === 0 ? (
-                    <p className="subtitle" style={{ marginTop: "12px" }}>
-                        No one else from {university.name} has joined yet. Invite your classmates!
-                    </p>
+                    <div className="groups-empty-state" style={{ marginTop: "18px" }}>
+                        <span className="empty-state-icon">👋</span>
+                        <p className="subtitle">
+                            No one else from {university.name} has joined yet. Invite your classmates!
+                        </p>
+                    </div>
                 ) : (
                     <>
                         <p className="groups-member-count">
                             {memberCount} classmate{memberCount === 1 ? "" : "s"} here with you
                         </p>
                         <div className="group-member-list">
-                            {members.map((member) => (
-                                <div key={member.telegramId} className="group-member">
-                                    <div className="avatar group-member-avatar">
-                                        {member.photoUrl ? (
-                                            <img src={member.photoUrl} alt={member.firstName} />
-                                        ) : (
-                                            <span>{member.firstName.charAt(0).toUpperCase()}</span>
-                                        )}
-                                    </div>
-                                    <div className="group-member-info">
-                                        <span className="group-member-name">
-                                            {member.firstName} {member.lastName}
-                                        </span>
+                            {members.map((member) => {
+                                const status = getActivityStatus(member.lastSeenAt);
+                                return (
+                                    <div key={member.telegramId} className="group-member">
+                                        <div className="avatar group-member-avatar group-member-ring">
+                                            {member.photoUrl ? (
+                                                <img src={member.photoUrl} alt={member.firstName} />
+                                            ) : (
+                                                <span>{member.firstName.charAt(0).toUpperCase()}</span>
+                                            )}
+                                        </div>
+                                        <div className="group-member-info">
+                                            <span className="group-member-name">
+                                                {member.firstName} {member.lastName}
+                                            </span>
+                                            {member.username && (
+                                                <span className="group-member-username">@{member.username}</span>
+                                            )}
+                                            {member.bio && <span className="group-member-bio">{member.bio}</span>}
+                                            {status && (
+                                                <span className={`group-member-status ${status.isRecent ? "is-recent" : ""}`}>
+                                                    <span className="group-member-status-dot" />
+                                                    {status.label}
+                                                </span>
+                                            )}
+                                        </div>
                                         {member.username && (
-                                            <span className="group-member-username">@{member.username}</span>
+                                            <a
+                                                className="btn-primary bubble-button group-member-message-btn"
+                                                href={`https://t.me/${member.username}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                Message
+                                            </a>
                                         )}
-                                        {member.bio && <span className="group-member-bio">{member.bio}</span>}
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     </>
                 )}

@@ -7,6 +7,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
+import java.time.Instant
 
 @Entity
 @Table(name = "universities")
@@ -31,4 +32,5 @@ class StudentProfile(
     @JoinColumn(name = "university_id")
     var university: University? = null,
     var onboardingComplete: Boolean = false,
+    var lastSeenAt: Instant? = null,
 )

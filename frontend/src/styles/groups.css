@@ -7,6 +7,12 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--card);
+    transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.groups-card:hover {
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.07);
+    transform: translateY(-2px);
 }
 
 .groups-university-header h3 {
@@ -40,10 +46,20 @@
     border: 1px solid var(--line);
     border-radius: 8px;
     background: var(--card-alt);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.group-member:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.06);
+    transform: translateY(-1px);
 }
 
 .group-member-avatar {
     flex-shrink: 0;
+}
+
+.group-member-ring {
+    box-shadow: 0 0 0 2px var(--card-alt), 0 0 0 4px color-mix(in srgb, var(--purple-soft) 70%, var(--accent) 30%);
 }
 
 .group-member-info {

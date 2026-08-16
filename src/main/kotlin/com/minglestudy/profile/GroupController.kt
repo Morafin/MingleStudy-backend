@@ -4,6 +4,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
+import java.time.Instant
 
 data class GroupMemberResponse(
     val telegramId: Long,
@@ -12,6 +13,7 @@ data class GroupMemberResponse(
     val username: String?,
     val photoUrl: String?,
     val bio: String?,
+    val lastSeenAt: Instant?,
 )
 
 data class MyGroupResponse(
@@ -53,6 +55,7 @@ class GroupController(
                     username = it.telegramUsername,
                     photoUrl = it.telegramPhotoUrl,
                     bio = it.bio,
+                    lastSeenAt = it.lastSeenAt,
                 )
             }
 
