@@ -1,5 +1,6 @@
 package com.minglestudy.profile
 
+import org.springframework.transaction.annotation.Transactional
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
@@ -54,6 +55,21 @@ class ScheduleController(
         return entries.findByStudent_TelegramIdOrderByDayAscStartTimeAsc(user.id).map { it.toResponse() }
     }
 
+    @GetMapping("/{id}")
+    fun getEntry(
+        @RequestHeader("X-Telegram-Init-Data") initData: String,
+        @PathVariable id: Long
+    ): ScheduleEntryResponse {
+        val user = telegramAuth.verify(initData)
+        val entry = entries.findById(id).orElseThrow {
+            ResponseStatusException(HttpStatus.NOT_FOUND, "Schedule entry not found")
+        }
+        if (entry.student?.telegramId != user.id) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not your schedule entry")
+        }
+        return entry.toResponse()
+    }
+
     @PostMapping
     fun addEntry(
         @RequestHeader("X-Telegram-Init-Data") initData: String,
@@ -99,6 +115,7 @@ class ScheduleController(
         return entries.save(entry).toResponse()
     }
 
+    @Transactional
     @DeleteMapping("/{id}")
     fun deleteEntry(@RequestHeader("X-Telegram-Init-Data") initData: String, @PathVariable id: Long) {
         val user = telegramAuth.verify(initData)

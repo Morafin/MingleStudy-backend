@@ -1,5 +1,6 @@
 package com.minglestudy.profile
 
+import com.fasterxml.jackson.annotation.JsonCreator
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
@@ -10,7 +11,18 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 
-enum class Weekday { MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY }
+enum class Weekday {
+    MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY, SUNDAY;
+
+    companion object {
+        @JvmStatic
+        @JsonCreator
+        fun fromString(value: String): Weekday {
+            return entries.firstOrNull { it.name.equals(value.trim(), ignoreCase = true) }
+                ?: throw IllegalArgumentException("Invalid weekday: $value")
+        }
+    }
+}
 
 @Entity
 @Table(name = "class_schedule_entries")
