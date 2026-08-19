@@ -10,7 +10,7 @@ class WebConfig(@Value("\${minglestudy.cors.allowed-origin}") private val allowe
     override fun addCorsMappings(registry: CorsRegistry) {
         registry.addMapping("/api/**")
             .allowedOrigins(allowedOrigin)
-            .allowedMethods("GET", "POST", "PUT", "OPTIONS")
+            .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("Content-Type", "X-Telegram-Init-Data")
     }
 }

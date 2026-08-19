@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import Toast from "./Toast";
 
 interface StudyEvent {
     id: string;
@@ -35,6 +36,7 @@ export default function StudyCalendar() {
     const [submitError, setSubmitError] = useState<string | null>(null);
     const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [toastMessage, setToastMessage] = useState<string | null>(null);
 
     // Persistent storage initialization from LocalStorage
     const [events, setEvents] = useState<EventsMap>(() => {
@@ -66,6 +68,15 @@ export default function StudyCalendar() {
     const handlePrevMonth = () => setViewDate(new Date(year, month - 1, 1));
     const handleNextMonth = () => setViewDate(new Date(year, month + 1, 1));
 
+    const handleDayGlowMove = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const el = e.currentTarget;
+        const rect = el.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        el.style.setProperty("--mx", `${x}%`);
+        el.style.setProperty("--my", `${y}%`);
+    };
+
     const handleAddEventSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!eventTitle.trim()) return;
@@ -86,6 +97,9 @@ export default function StudyCalendar() {
             ...prev,
             [selectedKey]: [...(prev[selectedKey] ?? []), newEvt],
         }));
+
+        // Local save always succeeds — confirm immediately with a toast.
+        setToastMessage("Session added ✓");
 
         // 2. Schedule Telegram notification via Spring Boot API
         // Read directly from window.Telegram.WebApp rather than the @twa-dev/sdk
@@ -175,6 +189,10 @@ export default function StudyCalendar() {
 
     return (
         <section className="calendar-section">
+            {toastMessage && (
+                <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />
+            )}
+
             <div className="section-heading">
                 <h2>Study Schedule</h2>
             </div>
@@ -227,9 +245,10 @@ export default function StudyCalendar() {
                             <button
                                 key={dayNum}
                                 type="button"
-                                className={`day-cell bubble-button ${isToday ? "today" : ""} ${
+                                className={`day-cell bubble-button glow-surface ${isToday ? "today" : ""} ${
                                     isSelected ? "selected" : ""
                                 }`}
+                                onMouseMove={handleDayGlowMove}
                                 onClick={() => {
                                     setSelectedKey(currentTileKey);
                                     setIsAdding(false);
@@ -334,9 +353,12 @@ export default function StudyCalendar() {
                         </div>
                     ) : (
                         !isAdding && (
-                            <p className="subtitle" style={{ fontSize: "13px", marginTop: "8px" }}>
-                                No study sessions scheduled for this day.
-                            </p>
+                            <div className="calendar-empty-state">
+                                <span className="empty-state-icon">📅</span>
+                                <p className="subtitle" style={{ fontSize: "13px" }}>
+                                    Nothing scheduled yet — add a session to start studying together.
+                                </p>
+                            </div>
                         )
                     )}
                 </div>

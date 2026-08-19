@@ -15,6 +15,13 @@
     --accent: #b8863a;
     --accent-ink: #ffffff;
 
+    /* Purple palette (sidebar / accent) */
+    --purple-deep: #49225b;
+    --purple-mid: #6e3482;
+    --purple-soft: #a56abd;
+    --purple-pale: #e7dbef;
+    --purple-mist: #f5ebfa;
+
     color: var(--ink);
     background: var(--bg-mid);
     font-family: "Raleway", sans-serif;
@@ -38,17 +45,45 @@ button {
 
 /* Base App Layout */
 .app-shell {
+    position: relative;
     display: flex;
     min-height: 100vh;
+    background: linear-gradient(
+            90deg,
+            #a56abd 0px,
+            #a56abd 168px,
+            #e7dbef 210px,
+            #f5ebfa 245px,
+            var(--bg-top) 280px,
+            var(--bg-mid) 100%
+    );
 }
 
 .app {
     flex: 1;
     min-width: 0;
+    width: 100%;
     max-width: 720px;
     min-height: 100vh;
     margin: 0 auto;
     padding: 32px 22px 56px;
+    /* .app is a query container so .dashboard-grid and .live-clock-card can
+       respond to their actual available width, not the browser viewport
+       (the sidebar eats variable horizontal space, so viewport width alone
+       isn't reliable here). */
+    container-type: inline-size;
+    /* width:100% is required, not optional: in mobile mode .app-shell
+       switches to flex-direction:column, which flips the main axis to
+       vertical. flex:1 then only controls height, not width, so width
+       falls back to flex "stretch" - but combined with
+       container-type:inline-size (which strips content-based intrinsic
+       sizing), that stretch silently resolves to 0 content width in
+       Chromium instead of filling the parent. Without this explicit
+       width, .app collapses to just its own left+right padding, crushing
+       every child (dashboard grid, live-clock-card, calendar) down to a
+       sliver regardless of viewport size. This was the real root cause
+       behind the squished/pill-shaped clock card across every mobile
+       screenshot in this thread. */
 }
 
 /* Base Headings & Typography */
@@ -134,4 +169,272 @@ h1 {
 
 .bubble-button:active {
     transform: scale(0.92);
+}
+
+/* Page transition fade (Dashboard <-> Groups) */
+.view-transition {
+    animation: viewFadeIn 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes viewFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Skeleton loaders */
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    background: var(--card-alt);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255, 255, 255, 0.6),
+            transparent
+    );
+    animation: skeletonShimmer 1.3s ease-in-out infinite;
+}
+
+@keyframes skeletonShimmer {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(100%); }
+}
+
+.skeleton-card {
+    padding: 22px;
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+    margin-bottom: 24px;
+}
+
+.skeleton-line {
+    height: 14px;
+    margin-bottom: 10px;
+    border-radius: 6px;
+}
+
+.skeleton-line.short { width: 40%; }
+.skeleton-line.medium { width: 65%; }
+.skeleton-line.full { width: 100%; }
+
+.skeleton-block {
+    height: 120px;
+    border-radius: 12px;
+    margin-top: 12px;
+}
+
+/* Toast confirmations */
+.toast {
+    position: fixed;
+    top: 18px;
+    left: 50%;
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 999px;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+    transform: translate(-50%, -16px);
+    animation: toastIn 0.28s cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+    toastOut 0.25s ease 2.55s forwards;
+}
+
+.toast-check {
+    display: grid;
+    place-items: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 10px;
+    font-weight: 700;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -16px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+}
+
+@keyframes toastOut {
+    from {
+        opacity: 1;
+        transform: translate(-50%, 0);
+    }
+    to {
+        opacity: 0;
+        transform: translate(-50%, -16px);
+    }
+}
+
+/* Empty state icon (shared) */
+.empty-state-icon {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card-alt));
+    color: var(--accent);
+    font-size: 20px;
+    margin-bottom: 4px;
+}
+
+/* Mobile: bottom nav bar leaves room at the bottom of scroll content */
+@media (max-width: 680px) {
+    .app-shell {
+        flex-direction: column;
+        background: var(--bg-mid);
+    }
+
+    .app {
+        max-width: none;
+        padding: 24px 16px calc(96px + env(safe-area-inset-bottom));
+    }
+}
+
+/* ---------- Dashboard layout ---------- */
+
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+/* Split into two columns once .app itself has enough room — this only
+   really kicks in on desktop Telegram / wide browser windows, since .app
+   is capped at 720px and mobile Telegram WebView stays well under this.
+   Threshold must sit strictly between two hard limits:
+     - LOWER BOUND (648px): mobile mode (@media max-width:680px) gives
+       .app 16px side padding, so the widest container it can ever
+       produce is 680 - 32 = 648px. Anything below that as the trigger
+       creates a dead zone where the bottom nav bar AND the two-column
+       grid are both active at once, squeezing everything.
+     - UPPER BOUND (676px): desktop/sidebar mode gives .app 22px side
+       padding and caps it at max-width:720px, so the widest container it
+       can EVER produce is 720 - 44 = 676px. A threshold at or above this
+       (e.g. the previous 680px) is mathematically unreachable - the
+       two-column layout would never fire on any screen size.
+   660px sits safely in the only valid gap between those two limits. */
+@container (min-width: 660px) {
+    .dashboard-grid {
+        grid-template-columns: 1.1fr 1fr;
+        align-items: start;
+    }
+}
+
+/* ---------- Live clock ---------- */
+
+.live-clock-section {
+    margin-bottom: 20px;
+}
+
+.live-clock-card {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 20px 22px;
+    border-radius: 20px;
+    background: var(--card);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+/* Below this width, the row layout runs out of horizontal room and
+   squeezes the time text until it wraps mid-value ("09:22" / "PM" on
+   separate lines). Stack the clock above the time instead. `align-items:
+   center` here makes flex items hug their own content on the cross axis
+   rather than stretch — width:100% above is what keeps the card itself
+   from collapsing down to the clock face's width when that happens. */
+@container (max-width: 380px) {
+    .live-clock-card {
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        gap: 12px;
+    }
+
+    .live-clock-info {
+        align-items: center;
+        width: 100%;
+    }
+}
+
+.live-clock-face {
+    width: 84px;
+    height: 84px;
+    flex-shrink: 0;
+}
+
+.live-clock-rim {
+    fill: var(--card);
+    stroke: var(--line);
+    stroke-width: 2;
+}
+
+.live-clock-dial {
+    fill: var(--card);
+}
+
+.live-clock-tick {
+    stroke: var(--ink-soft);
+    stroke-width: 2;
+    stroke-linecap: round;
+}
+
+.live-clock-numeral {
+    fill: var(--ink);
+    font-family: "Raleway", sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.live-clock-pivot {
+    fill: var(--ink);
+}
+
+.live-clock-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+
+.live-clock-time {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    font-size: 30px;
+    font-weight: 200;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    white-space: nowrap;
+}
+
+.live-clock-date {
+    letter-spacing: 0.01em;
 }

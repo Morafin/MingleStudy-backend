@@ -9,6 +9,12 @@
     background: var(--card);
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 8px 24px rgba(0, 0, 0, 0.06);
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+    transition: box-shadow 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.timetable-card:hover {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05), 0 16px 36px rgba(0, 0, 0, 0.09);
+    transform: translateY(-2px);
 }
 
 .timetable-day-group + .timetable-day-group {
@@ -55,6 +61,12 @@
     justify-content: space-between;
     gap: 12px;
     padding: 10px 0;
+    border-radius: 8px;
+    transition: background 0.15s ease;
+}
+
+.timetable-lesson-row:hover {
+    background: var(--card-alt);
 }
 
 .timetable-lesson-row + .timetable-lesson-row {

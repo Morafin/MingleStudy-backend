@@ -1,0 +1,171 @@
+.schedule-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.schedule-add-btn {
+    border: 1px solid var(--brass, #B8863A);
+    background: transparent;
+    color: var(--brass, #B8863A);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.schedule-add-btn:hover:not(:disabled) {
+    background: var(--brass, #B8863A);
+    color: #FFFFFF;
+}
+
+.schedule-add-btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.schedule-import-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 16px;
+    border: 1px dashed var(--brass, #B8863A);
+    border-radius: 10px;
+    margin-bottom: 16px;
+}
+
+.schedule-import-banner .subtitle {
+    margin: 0;
+}
+
+.timetable-lesson-row {
+    display: flex;
+    align-items: center;
+}
+
+.schedule-lesson-actions {
+    display: flex;
+    gap: 4px;
+    margin-left: 10px;
+}
+
+.schedule-icon-btn {
+    border: none;
+    background: transparent;
+    color: var(--gray-mid, #B6B6B6);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 4px 7px;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.schedule-icon-btn:hover {
+    color: #FFFFFF;
+    background: var(--nav-hover, #8EB69B);
+}
+
+.schedule-error {
+    color: #C0392B;
+    font-size: 0.85rem;
+    margin: 6px 0;
+}
+
+.schedule-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 50;
+    padding: 16px;
+}
+
+.schedule-modal {
+    background: #FFFFFF;
+    border: 1px solid #E2E2E2;
+    border-radius: 14px;
+    padding: 20px;
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.schedule-modal h3 {
+    margin: 0 0 4px;
+}
+
+.schedule-field {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--gray-mid, #7A7A7A);
+}
+
+.schedule-field input,
+.schedule-field select {
+    background: #FAFAFA;
+    border: 1px solid #DADADA;
+    border-radius: 8px;
+    padding: 8px 10px;
+    color: #1A1A1A;
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.schedule-field input:focus,
+.schedule-field select:focus {
+    outline: none;
+    border-color: var(--brass, #B8863A);
+}
+
+.schedule-field-row {
+    display: flex;
+    gap: 12px;
+}
+
+.schedule-field-row .schedule-field {
+    flex: 1;
+}
+
+.schedule-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 4px;
+}
+
+.schedule-cancel-btn {
+    border: 1px solid #DADADA;
+    background: transparent;
+    color: #555555;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.schedule-save-btn {
+    border: none;
+    background: var(--brass, #B8863A);
+    color: #FFFFFF;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.schedule-save-btn:disabled,
+.schedule-cancel-btn:disabled {
+    opacity: 0.6;
+    cursor: default;
+}

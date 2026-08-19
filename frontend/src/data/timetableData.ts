@@ -1,55 +1,46 @@
-// ISFT Institute weekly class schedule (semester week 6, 2026-03-23 – 2026-03-29).
-// Sourced directly from my.isft.uz/time-table. Update this array each semester
-// or when the institute's schedule changes.
+import type { ScheduleEntryInput, Weekday } from "./scheduleApi";
 
-export type Weekday = "Monday" | "Tuesday" | "Wednesday" | "Thursday" | "Friday" | "Saturday";
+export const WEEKDAYS: { value: Weekday; label: string }[] = [
+    { value: "MONDAY", label: "Monday" },
+    { value: "TUESDAY", label: "Tuesday" },
+    { value: "WEDNESDAY", label: "Wednesday" },
+    { value: "THURSDAY", label: "Thursday" },
+    { value: "FRIDAY", label: "Friday" },
+    { value: "SATURDAY", label: "Saturday" },
+    { value: "SUNDAY", label: "Sunday" },
+];
 
-export interface TimetableLesson {
-    day: Weekday;
-    start: string; // "HH:MM"
-    end: string;   // "HH:MM"
-    subject: string;
-    type: string;  // "Seminar", etc.
-    teacher?: string;
-    room?: string;
-}
+export const dayLabel = (day: Weekday): string =>
+    WEEKDAYS.find((d) => d.value === day)?.label ?? day;
 
-// Maps JS Date.getDay() (0 = Sunday .. 6 = Saturday) to weekday names used above.
-export const JS_DAY_TO_WEEKDAY: Record<number, Weekday | null> = {
-    0: null, // Sunday — no classes scheduled
-    1: "Monday",
-    2: "Tuesday",
-    3: "Wednesday",
-    4: "Thursday",
-    5: "Friday",
-    6: "Saturday",
+// Maps JS Date.getDay() (0 = Sunday .. 6 = Saturday) to backend Weekday enum values.
+export const JS_DAY_TO_WEEKDAY: Record<number, Weekday> = {
+    0: "SUNDAY",
+    1: "MONDAY",
+    2: "TUESDAY",
+    3: "WEDNESDAY",
+    4: "THURSDAY",
+    5: "FRIDAY",
+    6: "SATURDAY",
 };
 
-export const ISFT_TIMETABLE: TimetableLesson[] = [
-    // 08:30 – 09:50
-    { day: "Monday", start: "08:30", end: "09:50", subject: "Physics 2", type: "Seminar" },
-    { day: "Tuesday", start: "08:30", end: "09:50", subject: "Religious Studies", type: "Seminar" },
-    { day: "Wednesday", start: "08:30", end: "09:50", subject: "Data Structures and Algorithms", type: "Seminar" },
-
-    // 10:00 – 11:20
-    { day: "Monday", start: "10:00", end: "11:20", subject: "Calculus 2", type: "Seminar" },
-    { day: "Tuesday", start: "10:00", end: "11:20", subject: "Foreign Language 2", type: "Seminar" },
-    { day: "Wednesday", start: "10:00", end: "11:20", subject: "Philosophy", type: "Seminar" },
-
-    // 11:30 – 12:50
-    { day: "Monday", start: "11:30", end: "12:50", subject: "Programming 2", type: "Seminar" },
-    { day: "Tuesday", start: "11:30", end: "12:50", subject: "Calculus 2", type: "Seminar" },
-
-    // 15:00 – 16:20
-    { day: "Thursday", start: "15:00", end: "16:20", subject: "Physics 2", type: "Seminar", teacher: "Ulasheva Z. A." },
-    { day: "Friday", start: "15:00", end: "16:20", subject: "Calculus 2", type: "Seminar", teacher: "Husanov A. Z." },
-    { day: "Saturday", start: "15:00", end: "16:20", subject: "Religious Studies", type: "Seminar", teacher: "Aytbayev M. Y." },
-
-    // 16:30 – 17:50
-    { day: "Thursday", start: "16:30", end: "17:50", subject: "Data Structures and Algorithms", type: "Seminar", teacher: "Nematova Z. F." },
-    { day: "Friday", start: "16:30", end: "17:50", subject: "Philosophy", type: "Seminar", teacher: "Kadirova Z. R." },
-    { day: "Saturday", start: "16:30", end: "17:50", subject: "Programming 2", type: "Seminar", teacher: "Boborayimov O. X." },
-
-    // 18:00 – 19:20
-    { day: "Saturday", start: "18:00", end: "19:20", subject: "Foreign Language 2", type: "Seminar", teacher: "Xudayberdiyeva D. I." },
+// ISFT Institute's semester week-6 schedule (2026-03-23 – 2026-03-29), preserved here
+// so ISFT students can one-click import it into their own editable schedule instead
+// of retyping it. Every other student just starts with a blank schedule.
+export const ISFT_PRESET: ScheduleEntryInput[] = [
+    { day: "MONDAY", startTime: "08:30", endTime: "09:50", subject: "Physics 2", type: "Seminar" },
+    { day: "TUESDAY", startTime: "08:30", endTime: "09:50", subject: "Religious Studies", type: "Seminar" },
+    { day: "WEDNESDAY", startTime: "08:30", endTime: "09:50", subject: "Data Structures and Algorithms", type: "Seminar" },
+    { day: "MONDAY", startTime: "10:00", endTime: "11:20", subject: "Calculus 2", type: "Seminar" },
+    { day: "TUESDAY", startTime: "10:00", endTime: "11:20", subject: "Foreign Language 2", type: "Seminar" },
+    { day: "WEDNESDAY", startTime: "10:00", endTime: "11:20", subject: "Philosophy", type: "Seminar" },
+    { day: "MONDAY", startTime: "11:30", endTime: "12:50", subject: "Programming 2", type: "Seminar" },
+    { day: "TUESDAY", startTime: "11:30", endTime: "12:50", subject: "Calculus 2", type: "Seminar" },
+    { day: "THURSDAY", startTime: "15:00", endTime: "16:20", subject: "Physics 2", type: "Seminar", teacher: "Ulasheva Z. A." },
+    { day: "FRIDAY", startTime: "15:00", endTime: "16:20", subject: "Calculus 2", type: "Seminar", teacher: "Husanov A. Z." },
+    { day: "SATURDAY", startTime: "15:00", endTime: "16:20", subject: "Religious Studies", type: "Seminar", teacher: "Aytbayev M. Y." },
+    { day: "THURSDAY", startTime: "16:30", endTime: "17:50", subject: "Data Structures and Algorithms", type: "Seminar", teacher: "Nematova Z. F." },
+    { day: "FRIDAY", startTime: "16:30", endTime: "17:50", subject: "Philosophy", type: "Seminar", teacher: "Kadirova Z. R." },
+    { day: "SATURDAY", startTime: "16:30", endTime: "17:50", subject: "Programming 2", type: "Seminar", teacher: "Boborayimov O. X." },
+    { day: "SATURDAY", startTime: "18:00", endTime: "19:20", subject: "Foreign Language 2", type: "Seminar", teacher: "Xudayberdiyeva D. I." },
 ];

@@ -25,3 +25,4 @@ frontend/.vercel/
 
 # Logs
 *.log
+.vercel
