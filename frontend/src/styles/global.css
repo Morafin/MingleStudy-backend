@@ -438,3 +438,118 @@ h1 {
 .live-clock-date {
     letter-spacing: 0.01em;
 }
+
+/* ---------- Shared iOS-style grouped list (Profile / Settings pattern) ---------- */
+/* Reused across Profile, Schedule, Groups, and Calendar so every menu shares
+   the same section-label + grouped-card + hairline-divider language. */
+
+.ios-group-label {
+    margin: 20px 2px 6px;
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.ios-group-label:first-child {
+    margin-top: 0;
+}
+
+.ios-group {
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card);
+    border: 1px solid var(--line);
+}
+
+.ios-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 11px 14px;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    background: transparent;
+    text-align: left;
+    font: inherit;
+    transition: background 0.1s ease;
+    box-sizing: border-box;
+}
+
+.ios-row:last-child {
+    border-bottom: none;
+}
+
+button.ios-row {
+    cursor: pointer;
+}
+
+button.ios-row:active {
+    background: var(--card-alt);
+}
+
+.ios-row-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 7px;
+    color: #ffffff;
+    font-size: 13px;
+}
+
+.ios-row-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1;
+}
+
+.ios-row-title {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ios-row-sub {
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ios-row-value {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    flex-shrink: 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.ios-row-value-sub {
+    color: var(--ink-soft);
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.ios-row-chevron {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: var(--line);
+}

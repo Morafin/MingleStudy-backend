@@ -161,7 +161,8 @@
     background: var(--accent-ink);
 }
 
-/* Agenda & Add Event Form Styling */
+/* ---------- Agenda: iOS grouped list ---------- */
+
 .selected-day-events {
     margin-top: 20px;
     padding-top: 18px;
@@ -172,46 +173,52 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin: 0 2px 8px;
 }
 
 .agenda-header h4 {
     margin: 0;
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    text-transform: uppercase;
     color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
 }
 
 .add-event-btn {
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    border-radius: 8px;
     padding: 5px 12px;
-    border: none;
-    border-radius: 20px;
-    background: var(--accent);
-    color: var(--accent-ink);
     font-size: 12px;
     font-weight: 700;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.add-event-btn:hover {
+    background: var(--accent);
+    color: var(--accent-ink);
 }
 
 .add-event-form {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    margin-top: 12px;
-    padding: 14px;
-    border: none;
-    border-radius: 14px;
+    margin: 0 0 16px;
+    padding: 12px 14px;
+    border-radius: 10px;
     background: var(--card-alt);
+    border: 1px solid var(--line);
 }
 
 .add-event-form input {
-    padding: 10px 12px;
+    padding: 9px 11px;
     border: 1px solid var(--line);
-    border-radius: 10px;
+    border-radius: 8px;
     background: var(--card);
     color: var(--ink);
-    font-size: 14px;
+    font-size: 13.5px;
 }
 
 .add-event-form input:focus {
@@ -246,31 +253,30 @@
 }
 
 .event-chip {
-    display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 10px;
-    padding: 10px 4px 10px 12px;
-    border: none;
-    border-left: 3px solid var(--accent);
-    border-radius: 8px;
-    background: var(--card-alt);
-    color: var(--ink);
-    font-size: 14px;
-    font-weight: 600;
-}
-
-.event-time {
-    color: var(--ink-soft);
-    font-size: 12px;
-    font-weight: 500;
-    font-variant-numeric: tabular-nums;
 }
 
 .event-info {
     display: flex;
-    align-items: center;
-    gap: 10px;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.event-info span:first-child {
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.event-time {
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
 }
 
 .delete-event-btn {
@@ -285,6 +291,7 @@
     font-size: 12px;
     line-height: 1;
     cursor: pointer;
+    flex-shrink: 0;
     transition: color 0.15s ease, background 0.15s ease;
 }
 
@@ -298,6 +305,6 @@
     flex-direction: column;
     align-items: center;
     gap: 6px;
-    padding: 18px 12px;
+    padding: 20px 12px;
     text-align: center;
 }

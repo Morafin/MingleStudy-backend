@@ -55,11 +55,11 @@
     cursor: pointer;
     box-sizing: border-box;
     appearance: none;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    transition: transform 0.15s ease;
 }
 
 .sidebar-avatar:active {
-    transform: scale(0.93);
+    transform: scale(0.94);
 }
 
 .sidebar-avatar img {
@@ -107,87 +107,90 @@
     line-height: 1.4;
 }
 
-.sidebar-nav {
+/* iOS-style grouped nav list: a frosted white card sitting on the purple panel,
+   rows joined together with hairline dividers, colored icon badges + label + chevron
+   — same visual language as the Settings app grouped list. Desktop only; mobile uses
+   the flat bottom tab bar below instead. */
+
+.sidebar-nav-group {
     display: flex;
     flex-direction: column;
     width: 100%;
     margin-top: 12px;
-    padding-top: 24px;
-    border-top: 1px solid rgba(231, 219, 239, 0.25);
-    gap: 8px;
+    border-radius: 12px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(12px) saturate(160%);
+    -webkit-backdrop-filter: blur(12px) saturate(160%);
+    box-shadow: 0 4px 18px rgba(30, 8, 40, 0.18);
 }
 
-.nav-item {
-    position: relative;
+.nav-row {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     width: 100%;
-    padding: 12px 14px;
+    padding: 10px 10px;
     border: none;
-    border-radius: 12px;
+    border-bottom: 1px solid rgba(60, 20, 70, 0.08);
     background: transparent;
-    color: rgba(245, 235, 250, 0.85);
-    font-size: 15px;
-    font-weight: 600;
     text-align: left;
-    overflow: hidden;
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+    cursor: pointer;
+    transition: background 0.1s ease;
 }
 
-.nav-item:active {
-    transform: scale(0.96);
+.nav-row:last-child {
+    border-bottom: none;
 }
 
-/* Spotlight glow that tracks the cursor */
-.glow-surface {
-    --mx: 50%;
-    --my: 50%;
+.nav-row:active {
+    background: rgba(73, 34, 91, 0.08);
 }
 
-.glow-surface::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: radial-gradient(
-            circle at var(--mx) var(--my),
-            rgba(245, 235, 250, 0.95),
-            rgba(165, 106, 189, 0.55) 35%,
-            rgba(245, 235, 250, 0) 70%
-    );
-    opacity: 0;
-    transition: opacity 0.35s ease;
-    pointer-events: none;
-}
-
-.nav-item.glow-surface::after {
-    mix-blend-mode: overlay;
-}
-
-.sidebar-avatar.glow-surface::after {
-    mix-blend-mode: soft-light;
-}
-
-.glow-surface:hover::after {
-    opacity: 1;
-}
-
-.glow-surface:hover {
-    color: #ffffff;
-}
-
-.home-icon {
-    position: relative;
-    width: 20px;
-    height: 20px;
+.nav-row-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
     flex-shrink: 0;
-    color: #e7dbef;
-    transition: color 0.2s ease;
+    border-radius: 7px;
+    color: #ffffff;
 }
 
-.nav-item:hover .home-icon {
-    color: #ffffff;
+.nav-row-icon svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* Badge colors pulled from the app's real palette instead of iOS system
+   colors — mid purple + brass accent (both already used as CTA/brand
+   colors elsewhere) plus a sage green and the softer purple variant, so
+   these read as native to the app rather than borrowed from iOS. */
+.nav-row-icon-blue { background: #6e3482; }    /* --purple-mid */
+.nav-row-icon-orange { background: #b8863a; }  /* --accent (brass) */
+.nav-row-icon-green { background: #8EB69B; }   /* sage, matches nav hover */
+.nav-row-icon-purple { background: #a56abd; }  /* --purple-soft */
+
+.nav-row-label {
+    flex: 1;
+    color: #1A1A1A;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.nav-row-chevron {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+    color: #C6C6C8;
+}
+
+/* Bottom tab bar for mobile — flat and clean, no purple/glow, matching iOS's
+   tab bar aesthetic (white background, gray icons, dark active tap state). */
+
+.sidebar-tabbar {
+    display: none;
 }
 
 /* Mobile: collapse to a fixed bottom icon bar */
@@ -202,12 +205,12 @@
         width: 100%;
         flex: 0 0 auto;
         flex-direction: row;
-        justify-content: space-around;
+        justify-content: center;
         align-items: center;
         gap: 0;
-        padding: 10px 8px calc(10px + env(safe-area-inset-bottom));
-        background: linear-gradient(90deg, #49225b 0%, #6e3482 50%, #a56abd 100%);
-        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.12);
+        padding: 0;
+        background: transparent;
+        box-shadow: none;
     }
 
     .sidebar::after {
@@ -215,31 +218,45 @@
     }
 
     .sidebar-top,
-    .sidebar-greeting {
+    .sidebar-greeting,
+    .sidebar-nav-group {
         display: none;
     }
 
-    .sidebar-nav {
-        flex-direction: row;
+    .sidebar-tabbar {
+        display: flex;
         width: 100%;
-        margin-top: 0;
-        padding-top: 0;
-        border-top: none;
         justify-content: space-around;
-        gap: 4px;
+        align-items: center;
+        padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+        background: rgba(249, 249, 249, 0.96);
+        backdrop-filter: blur(16px) saturate(180%);
+        -webkit-backdrop-filter: blur(16px) saturate(180%);
+        border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
 
-    .nav-item {
+    .tab-item {
+        display: flex;
         flex: 1;
         flex-direction: column;
-        gap: 4px;
-        padding: 8px 4px;
-        border-radius: 10px;
+        align-items: center;
+        gap: 3px;
+        border: none;
+        background: transparent;
+        padding: 4px 2px;
+        color: #8E8E93;
         font-size: 10px;
-        text-align: center;
+        font-weight: 500;
+        cursor: pointer;
+        transition: color 0.1s ease, transform 0.1s ease;
     }
 
-    .home-icon {
+    .tab-item:active {
+        color: #49225b;
+        transform: scale(0.94);
+    }
+
+    .tab-icon {
         width: 22px;
         height: 22px;
     }

@@ -284,17 +284,17 @@ export default function StudyCalendar() {
 
                     {/* Status messages */}
                     {isSubmitting && (
-                        <p style={{ color: "#888", fontSize: "13px", marginTop: "8px" }}>
+                        <p style={{ color: "#888", fontSize: "13px", marginBottom: "8px" }}>
                             Scheduling reminder…
                         </p>
                     )}
                     {submitError && (
-                        <p style={{ color: "#e53935", fontSize: "13px", marginTop: "8px", wordBreak: "break-word" }}>
+                        <p style={{ color: "#e53935", fontSize: "13px", marginBottom: "8px", wordBreak: "break-word" }}>
                             ⚠️ {submitError}
                         </p>
                     )}
                     {submitSuccess && (
-                        <p style={{ color: "#2e7d32", fontSize: "13px", marginTop: "8px" }}>
+                        <p style={{ color: "#2e7d32", fontSize: "13px", marginBottom: "8px" }}>
                             ✅ {submitSuccess}
                         </p>
                     )}
@@ -333,9 +333,9 @@ export default function StudyCalendar() {
 
                     {/* Events List */}
                     {activeEvents.length > 0 ? (
-                        <div style={{ display: "grid", gap: "8px", marginTop: "10px" }}>
+                        <div className="ios-group">
                             {activeEvents.map((evt) => (
-                                <div key={evt.id} className="event-chip">
+                                <div key={evt.id} className="ios-row event-chip">
                                     <div className="event-info">
                                         <span>{evt.title}</span>
                                         <span className="event-time">{evt.time}</span>

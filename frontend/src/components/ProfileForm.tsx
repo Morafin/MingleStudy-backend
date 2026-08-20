@@ -44,35 +44,62 @@ function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
 
   const showResults = universityQuery.trim() && !selectedUniversity;
   const hasExactMatch = universities.some((university) => university.name.toLowerCase() === universityQuery.trim().toLowerCase());
+  const initials = `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || "?";
 
   return (
       <section className="profile-form-shell">
         <p className="eyebrow">MINGLESTUDY</p>
         <h1>{profile.onboardingComplete ? "Edit your profile" : "Welcome to MingleStudy"}</h1>
         <p className="subtitle">Tell students a little about who they will be learning with.</p>
-        <form className="profile-form" onSubmit={submit}>
-          <label>First name<input value={firstName} maxLength={80} onChange={(event) => setFirstName(event.target.value)} /></label>
-          <label>Last name<input value={lastName} maxLength={80} onChange={(event) => setLastName(event.target.value)} /></label>
 
-          <label>
-            University
-            <input
-                value={universityQuery}
-                maxLength={180}
-                placeholder="Start typing your university name"
-                onChange={(event) => { setUniversityQuery(event.target.value); setSelectedUniversity(null); }}
-            />
-          </label>
+        <form className="profile-form" onSubmit={submit}>
+          <div className="profile-summary-card">
+            <div className="profile-summary-avatar">{initials}</div>
+            <div className="profile-summary-text">
+              <span className="profile-summary-name">
+                {firstName.trim() || lastName.trim() ? `${firstName} ${lastName}`.trim() : "Your name"}
+              </span>
+              <span className="profile-summary-university">
+                {selectedUniversity?.name || universityQuery.trim() || "Your university"}
+              </span>
+            </div>
+          </div>
+
+          <div className="profile-group-label">About you</div>
+          <div className="profile-group">
+            <label className="profile-row">
+              <span className="profile-row-label">First name</span>
+              <input value={firstName} maxLength={80} onChange={(event) => setFirstName(event.target.value)} />
+            </label>
+            <label className="profile-row">
+              <span className="profile-row-label">Last name</span>
+              <input value={lastName} maxLength={80} onChange={(event) => setLastName(event.target.value)} />
+            </label>
+          </div>
+
+          <div className="profile-group-label">University</div>
+          <div className="profile-group">
+            <label className="profile-row">
+              <span className="profile-row-label">Search</span>
+              <input
+                  value={universityQuery}
+                  maxLength={180}
+                  placeholder="Start typing your university name"
+                  onChange={(event) => { setUniversityQuery(event.target.value); setSelectedUniversity(null); }}
+              />
+            </label>
+          </div>
 
           {selectedUniversity && (
               <p className="university-selected-hint">{formatStudentCount(selectedUniversity.studentCount)}</p>
           )}
 
           {showResults && (
-              <div className="university-results">
+              <div className="profile-group university-results">
                 {universities.map((university) => (
                     <button
                         type="button"
+                        className="profile-row university-result-row"
                         key={university.id}
                         onClick={() => { setSelectedUniversity(university); setUniversityQuery(university.name); }}
                     >
@@ -83,6 +110,7 @@ function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
                 {!hasExactMatch && (
                     <button
                         type="button"
+                        className="profile-row university-result-row university-result-add"
                         onClick={async () => {
                           const university = await addUniversity(initData, universityQuery.trim());
                           setSelectedUniversity(university);
@@ -95,8 +123,20 @@ function ProfileForm({ initData, profile, onSaved, onCancel }: Props) {
               </div>
           )}
 
-          <label>Bio <span>Optional</span><textarea value={bio} maxLength={500} placeholder="What are you studying or hoping to learn?" onChange={(event) => setBio(event.target.value)} /></label>
+          <div className="profile-group-label">Bio <span className="profile-group-label-optional">Optional</span></div>
+          <div className="profile-group">
+            <label className="profile-row profile-row-textarea">
+              <textarea
+                  value={bio}
+                  maxLength={500}
+                  placeholder="What are you studying or hoping to learn?"
+                  onChange={(event) => setBio(event.target.value)}
+              />
+            </label>
+          </div>
+
           {error && <p className="form-error">{error}</p>}
+
           <div className="form-actions">
             <button className="primary-button" disabled={saving || !universityQuery.trim()}>
               {saving ? "Saving…" : "Save profile"}

@@ -186,7 +186,7 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
 
             <div className="timetable-card">
                 {loading && <p className="subtitle">Loading your schedule…</p>}
-                {error && <p className="schedule-error">{error}</p>}
+                {error && !pendingDeleteLesson && editingId === null && <p className="schedule-error">{error}</p>}
 
                 {!loading && showIsftImport && (
                     <div className="schedule-import-banner">
@@ -207,22 +207,22 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
 
                     return (
                         <div key={day} className="timetable-day-group">
-                            <h4 className={`timetable-day-header ${isToday(day) ? "is-today" : ""}`}>
+                            <h4 className={`ios-group-label timetable-day-header ${isToday(day) ? "is-today" : ""}`}>
                                 {dayLabel(day)}
                                 {isToday(day) && <span className="timetable-today-badge">Today</span>}
                             </h4>
 
-                            <div className="timetable-lesson-list">
+                            <div className="ios-group">
                                 {lessons.map((lesson) => (
-                                    <div key={lesson.id} className="timetable-lesson-row">
-                                        <div className="timetable-lesson-info">
-                                            <span className="timetable-lesson-subject">{lesson.subject}</span>
-                                            <span className="timetable-lesson-type">
+                                    <div key={lesson.id} className="ios-row timetable-lesson-row">
+                                        <div className="ios-row-main timetable-lesson-info">
+                                            <span className="ios-row-title timetable-lesson-subject">{lesson.subject}</span>
+                                            <span className="ios-row-sub timetable-lesson-type">
                                                 ({lesson.type}){lesson.teacher ? ` · ${lesson.teacher}` : ""}
                                                 {lesson.room ? ` · ${lesson.room}` : ""}
                                             </span>
                                         </div>
-                                        <div className="timetable-lesson-time">
+                                        <div className="ios-row-value timetable-lesson-time">
                                             <span>{lesson.startTime}</span>
                                             <span className="timetable-lesson-time-end">{lesson.endTime}</span>
                                         </div>
@@ -253,86 +253,132 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
             </div>
 
             {editingId !== null && (
-                <div className="schedule-modal-backdrop" onClick={closeForm}>
-                    <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>{editingId === "new" ? "Add class" : "Edit class"}</h3>
-
-                        <label className="schedule-field">
-                            Day
-                            <select value={form.day} onChange={(e) => setForm({ ...form, day: e.target.value as Weekday })}>
-                                {WEEKDAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
-                            </select>
-                        </label>
-
-                        <div className="schedule-field-row">
-                            <label className="schedule-field">
-                                Start
-                                <input type="time" value={form.startTime} onChange={(e) => setForm({ ...form, startTime: e.target.value })} />
-                            </label>
-                            <label className="schedule-field">
-                                End
-                                <input type="time" value={form.endTime} onChange={(e) => setForm({ ...form, endTime: e.target.value })} />
-                            </label>
-                        </div>
-
-                        <label className="schedule-field">
-                            Subject
-                            <input
-                                type="text"
-                                value={form.subject}
-                                onChange={(e) => setForm({ ...form, subject: e.target.value })}
-                                placeholder="e.g. Calculus 2"
-                            />
-                        </label>
-
-                        <label className="schedule-field">
-                            Type
-                            <input
-                                type="text"
-                                value={form.type}
-                                onChange={(e) => setForm({ ...form, type: e.target.value })}
-                                placeholder="Seminar, Lecture, Lab…"
-                            />
-                        </label>
-
-                        <div className="schedule-field-row">
-                            <label className="schedule-field">
-                                Teacher (optional)
-                                <input type="text" value={form.teacher ?? ""} onChange={(e) => setForm({ ...form, teacher: e.target.value })} />
-                            </label>
-                            <label className="schedule-field">
-                                Room (optional)
-                                <input type="text" value={form.room ?? ""} onChange={(e) => setForm({ ...form, room: e.target.value })} />
-                            </label>
-                        </div>
-
-                        {error && <p className="schedule-error">{error}</p>}
-
-                        <div className="schedule-modal-actions">
-                            <button className="schedule-cancel-btn" onClick={closeForm} disabled={saving}>Cancel</button>
-                            <button className="schedule-save-btn" onClick={handleSave} disabled={saving}>
+                <div className="ios-sheet-backdrop" onClick={closeForm}>
+                    <div className="ios-sheet" onClick={(e) => e.stopPropagation()}>
+                        <div className="ios-sheet-navbar">
+                            <button className="ios-sheet-nav-btn" onClick={closeForm} disabled={saving}>
+                                Cancel
+                            </button>
+                            <h3 className="ios-sheet-nav-title">
+                                {editingId === "new" ? "Add Class" : "Edit Class"}
+                            </h3>
+                            <button
+                                className="ios-sheet-nav-btn ios-sheet-nav-btn-primary"
+                                onClick={handleSave}
+                                disabled={saving}
+                            >
                                 {saving ? "Saving…" : "Save"}
                             </button>
+                        </div>
+
+                        <div className="ios-sheet-body">
+                            {error && <p className="ios-sheet-error">{error}</p>}
+
+                            <div className="ios-sheet-group">
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Day</span>
+                                    <select
+                                        className="ios-sheet-input ios-sheet-select"
+                                        value={form.day}
+                                        onChange={(e) => setForm({ ...form, day: e.target.value as Weekday })}
+                                    >
+                                        {WEEKDAYS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                                    </select>
+                                </div>
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Starts</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="time"
+                                        value={form.startTime}
+                                        onChange={(e) => setForm({ ...form, startTime: e.target.value })}
+                                    />
+                                </div>
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Ends</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="time"
+                                        value={form.endTime}
+                                        onChange={(e) => setForm({ ...form, endTime: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="ios-sheet-group">
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Subject</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="text"
+                                        value={form.subject}
+                                        onChange={(e) => setForm({ ...form, subject: e.target.value })}
+                                        placeholder="e.g. Calculus 2"
+                                    />
+                                </div>
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Type</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="text"
+                                        value={form.type}
+                                        onChange={(e) => setForm({ ...form, type: e.target.value })}
+                                        placeholder="Seminar, Lecture, Lab…"
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="ios-sheet-group">
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Teacher</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="text"
+                                        value={form.teacher ?? ""}
+                                        onChange={(e) => setForm({ ...form, teacher: e.target.value })}
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                                <div className="ios-sheet-row">
+                                    <span className="ios-sheet-label">Room</span>
+                                    <input
+                                        className="ios-sheet-input"
+                                        type="text"
+                                        value={form.room ?? ""}
+                                        onChange={(e) => setForm({ ...form, room: e.target.value })}
+                                        placeholder="Optional"
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
             {pendingDeleteLesson && (
-                <div className="schedule-modal-backdrop" onClick={cancelDelete}>
-                    <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
-                        <h3>Remove class?</h3>
-                        <p className="subtitle">
-                            {pendingDeleteLesson.subject} on {dayLabel(pendingDeleteLesson.day)} at {pendingDeleteLesson.startTime} will be removed from your schedule.
-                        </p>
+                <div className="ios-alert-backdrop" onClick={cancelDelete}>
+                    <div className="ios-alert" onClick={(e) => e.stopPropagation()}>
+                        <div className="ios-alert-body">
+                            <h3 className="ios-alert-title">Remove Class?</h3>
+                            <p className="ios-alert-message">
+                                “{pendingDeleteLesson.subject}” on {dayLabel(pendingDeleteLesson.day)} at {pendingDeleteLesson.startTime} will be removed from your schedule.
+                            </p>
+                            {error && <p className="ios-alert-error">{error}</p>}
+                        </div>
 
-                        {error && <p className="schedule-error">{error}</p>}
-
-                        <div className="schedule-modal-actions">
-                            <button className="schedule-cancel-btn" onClick={cancelDelete} disabled={deletingId !== null}>
+                        <div className="ios-alert-actions">
+                            <button
+                                className="ios-alert-btn"
+                                onClick={cancelDelete}
+                                disabled={deletingId !== null}
+                            >
                                 Cancel
                             </button>
-                            <button className="schedule-save-btn" onClick={confirmDelete} disabled={deletingId !== null}>
+                            <button
+                                className="ios-alert-btn ios-alert-btn-destructive"
+                                onClick={confirmDelete}
+                                disabled={deletingId !== null}
+                            >
                                 {deletingId !== null ? "Removing…" : "Remove"}
                             </button>
                         </div>
