@@ -52,6 +52,14 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
     const [editingId, setEditingId] = useState<number | "new" | null>(null);
     const [form, setForm] = useState<ScheduleEntryInput>(EMPTY_FORM);
 
+    // Track the lesson pending delete confirmation (in-app modal instead of window.confirm,
+    // since Telegram's WebView silently suppresses repeated native confirm() dialogs after a
+    // few calls — it just returns false with no UI, which looks like the delete button "stops working").
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+    // Track which entry is actively being deleted so we can disable its button and prevent
+    // double-fires from a fast double-tap while the request is in flight.
+    const [deletingId, setDeletingId] = useState<number | null>(null);
+
     useEffect(() => {
         if (!initData) { setLoading(false); return; }
         setLoading(true);
@@ -68,6 +76,10 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
 
     const hasAnyLessons = entries.length > 0;
     const showIsftImport = isIsftStudent(universityName) && entries.length === 0 && !loading;
+
+    const pendingDeleteLesson = pendingDeleteId !== null
+        ? entries.find((e) => e.id === pendingDeleteId) ?? null
+        : null;
 
     const openNewForm = (day?: Weekday) => {
         setForm({ ...EMPTY_FORM, day: day ?? "MONDAY" });
@@ -123,14 +135,28 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Remove this class from your schedule?")) return;
+    const requestDelete = (id: number) => {
+        setError(null);
+        setPendingDeleteId(id);
+    };
+
+    const cancelDelete = () => {
+        setPendingDeleteId(null);
+    };
+
+    const confirmDelete = async () => {
+        if (pendingDeleteId === null) return;
+        const id = pendingDeleteId;
+        setDeletingId(id);
         setError(null);
         try {
             await deleteScheduleEntry(initData, id);
             setEntries((prev) => prev.filter((e) => e.id !== id));
         } catch (e) {
             setError((e as Error).message);
+        } finally {
+            setDeletingId(null);
+            setPendingDeleteId(null);
         }
     };
 
@@ -205,15 +231,17 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                                                 className="schedule-icon-btn"
                                                 onClick={(e) => { e.stopPropagation(); openEditForm(lesson); }}
                                                 aria-label="Edit class"
+                                                disabled={deletingId === lesson.id}
                                             >
                                                 ✎
                                             </button>
                                             <button
                                                 className="schedule-icon-btn"
-                                                onClick={(e) => { e.stopPropagation(); handleDelete(lesson.id); }}
+                                                onClick={(e) => { e.stopPropagation(); requestDelete(lesson.id); }}
                                                 aria-label="Remove class"
+                                                disabled={deletingId === lesson.id}
                                             >
-                                                ✕
+                                                {deletingId === lesson.id ? "…" : "✕"}
                                             </button>
                                         </div>
                                     </div>
@@ -284,6 +312,28 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                             <button className="schedule-cancel-btn" onClick={closeForm} disabled={saving}>Cancel</button>
                             <button className="schedule-save-btn" onClick={handleSave} disabled={saving}>
                                 {saving ? "Saving…" : "Save"}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {pendingDeleteLesson && (
+                <div className="schedule-modal-backdrop" onClick={cancelDelete}>
+                    <div className="schedule-modal" onClick={(e) => e.stopPropagation()}>
+                        <h3>Remove class?</h3>
+                        <p className="subtitle">
+                            {pendingDeleteLesson.subject} on {dayLabel(pendingDeleteLesson.day)} at {pendingDeleteLesson.startTime} will be removed from your schedule.
+                        </p>
+
+                        {error && <p className="schedule-error">{error}</p>}
+
+                        <div className="schedule-modal-actions">
+                            <button className="schedule-cancel-btn" onClick={cancelDelete} disabled={deletingId !== null}>
+                                Cancel
+                            </button>
+                            <button className="schedule-save-btn" onClick={confirmDelete} disabled={deletingId !== null}>
+                                {deletingId !== null ? "Removing…" : "Remove"}
                             </button>
                         </div>
                     </div>
