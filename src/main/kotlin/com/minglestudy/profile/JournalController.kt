@@ -19,6 +19,7 @@ import java.time.Instant
 data class JournalEntryResponse(
     val id: Long,
     val content: String,
+    val pinned: Boolean,
     val createdAt: Instant,
     val updatedAt: Instant,
 )
@@ -37,7 +38,7 @@ class JournalController(
     @GetMapping("/mine")
     fun myEntries(@RequestHeader("X-Telegram-Init-Data") initData: String): List<JournalEntryResponse> {
         val user = telegramAuth.verify(initData)
-        return entries.findByStudent_TelegramIdOrderByUpdatedAtDesc(user.id).map { it.toResponse() }
+        return entries.findByStudent_TelegramIdOrderByPinnedDescUpdatedAtDesc(user.id).map { it.toResponse() }
     }
 
     @PostMapping
@@ -65,6 +66,18 @@ class JournalController(
         return entries.save(entry).toResponse()
     }
 
+    @PutMapping("/{id}/pin")
+    fun togglePin(
+        @RequestHeader("X-Telegram-Init-Data") initData: String,
+        @PathVariable id: Long,
+    ): JournalEntryResponse {
+        val user = telegramAuth.verify(initData)
+        val entry = entries.findByIdAndStudent_TelegramId(id, user.id)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Journal entry not found")
+        entry.pinned = !entry.pinned
+        return entries.save(entry).toResponse()
+    }
+
     @Transactional
     @DeleteMapping("/{id}")
     fun deleteEntry(@RequestHeader("X-Telegram-Init-Data") initData: String, @PathVariable id: Long) {
@@ -83,6 +96,6 @@ class JournalController(
     }
 
     private fun JournalEntry.toResponse() = JournalEntryResponse(
-        requireNotNull(id), content, createdAt, updatedAt,
+        requireNotNull(id), content, pinned, createdAt, updatedAt,
     )
 }

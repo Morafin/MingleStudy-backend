@@ -194,6 +194,11 @@
         border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
 
+    :root[data-theme="dark"] .sidebar-tabbar {
+        background: rgba(28, 28, 30, 0.92);
+        border-top: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
     .tab-item {
         display: flex;
         flex: 1;

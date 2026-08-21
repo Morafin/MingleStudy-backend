@@ -23,6 +23,8 @@ class JournalEntry(
     @Column(columnDefinition = "TEXT")
     var content: String = "",
 
+    var pinned: Boolean = false,
+
     var createdAt: Instant = Instant.now(),
     var updatedAt: Instant = Instant.now(),
 )

@@ -3,6 +3,7 @@ const API_BASE = "https://minglestudy-backend-production.up.railway.app";
 export type JournalEntry = {
     id: number;
     content: string;
+    pinned: boolean;
     createdAt: string;
     updatedAt: string;
 };
@@ -41,6 +42,12 @@ export function updateJournalEntry(initData: string, id: number, content: string
     return request<JournalEntry>(`/api/journal/${id}`, initData, {
         method: "PUT",
         body: JSON.stringify({ content }),
+    });
+}
+
+export function togglePinJournalEntry(initData: string, id: number): Promise<JournalEntry> {
+    return request<JournalEntry>(`/api/journal/${id}/pin`, initData, {
+        method: "PUT",
     });
 }
 

@@ -27,6 +27,23 @@
     font-family: "Raleway", sans-serif;
 }
 
+:root[data-theme="dark"] {
+    --bg-top: #1c1c1e;
+    --bg-mid: #131314;
+    --bg-bottom: #0a0a0b;
+    --card: #1f1f21;
+    --card-alt: #2a2a2c;
+    --ink: #f2f2f2;
+    --ink-soft: #9a9a9a;
+    --line: #3a3a3c;
+    --sage: #3a3a3c;
+    --tan: #2a2a2c;
+    --accent: #c99a52;
+    --accent-ink: #131314;
+    --purple-pale: #3a2d42;
+    --purple-mist: #2b2230;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -241,7 +258,9 @@ h1 {
     gap: 8px;
     padding: 10px 18px;
     border-radius: 999px;
-    background: var(--ink);
+    background: rgba(28, 28, 30, 0.92);
+    backdrop-filter: blur(12px) saturate(180%);
+    -webkit-backdrop-filter: blur(12px) saturate(180%);
     color: #ffffff;
     font-size: 13px;
     font-weight: 600;

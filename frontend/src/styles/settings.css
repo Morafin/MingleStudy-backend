@@ -23,6 +23,35 @@
     display: block;
 }
 
-.settings-row-static {
-    cursor: default;
+/* ---------- Appearance segmented control (macOS System Settings style) ---------- */
+.settings-appearance-group {
+    padding: 10px;
+}
+
+.settings-segmented {
+    display: flex;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 8px;
+    background: var(--bg-mid);
+}
+
+.settings-segment {
+    flex: 1;
+    padding: 7px 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--ink-soft);
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.settings-segment.is-active {
+    background: var(--card);
+    color: var(--ink);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.14);
 }
