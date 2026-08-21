@@ -142,7 +142,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                 <h2>Groups</h2>
                 <button
                     type="button"
-                    className="schedule-add-btn"
+                    className="groups-invite-btn"
                     onClick={() => handleInvite(university.id)}
                 >
                     <IconShare /> {copied ? "Link copied!" : "Invite classmate"}
@@ -164,7 +164,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                     </p>
                     <button
                         type="button"
-                        className="btn-primary bubble-button"
+                        className="groups-invite-btn"
                         onClick={() => handleInvite(university.id)}
                     >
                         <IconShare /> {copied ? "Link copied!" : "Invite a classmate"}

@@ -94,3 +94,47 @@
 .groups-empty-state .btn-primary {
     margin-top: 6px;
 }
+
+/* Invite classmate — filled iOS/macOS pill, same visual language as the Message button
+   rather than the app's generic outlined "+ Add class" style, since this sits in a
+   header next to page chrome and needs to read as a primary, tappable action. */
+.groups-invite-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    padding: 8px 16px 8px 14px;
+    border: none;
+    border-radius: 20px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.2;
+    white-space: nowrap;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--accent) 35%, transparent);
+    cursor: pointer;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.groups-invite-btn svg {
+    flex-shrink: 0;
+}
+
+.groups-invite-btn:active {
+    opacity: 0.8;
+    transform: scale(0.97);
+}
+
+.groups-invite-btn:disabled {
+    opacity: 0.55;
+    cursor: default;
+    transform: none;
+}
+
+/* Same button, reused inline in the empty state below the "invite your classmates" copy —
+   slightly larger tap target since it's a standalone CTA there rather than header chrome. */
+.groups-empty-state .groups-invite-btn {
+    padding: 9px 18px 9px 15px;
+    font-size: 13.5px;
+}
