@@ -163,15 +163,29 @@
 }
 
 .journal-list-pane {
-    flex: 0 0 260px;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 260px;
+    width: 260px;
     border-right: 1px solid var(--line);
     background: var(--card);
+    overflow-x: hidden;
     overflow-y: auto;
+    opacity: 1;
+    transition:
+            flex-basis 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+            opacity 0.22s ease,
+            border-color 0.3s ease;
 }
 
 @media (min-width: 901px) {
     .journal-list-pane.journal-list-collapsed {
-        display: none;
+        flex-basis: 0;
+        width: 0;
+        opacity: 0;
+        border-right-color: transparent;
+        pointer-events: none;
     }
 }
 
