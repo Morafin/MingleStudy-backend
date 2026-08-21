@@ -66,6 +66,15 @@ function IconSearch() {
     );
 }
 
+function IconSidebar() {
+    return (
+        <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="3.5" y="4.5" width="17" height="15" rx="2.5" />
+            <line x1="9.5" y1="4.5" x2="9.5" y2="19.5" />
+        </svg>
+    );
+}
+
 function IconCompose() {
     return (
         <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
@@ -103,6 +112,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
     const [toastMessage, setToastMessage] = useState<string | null>(null);
     const [query, setQuery] = useState("");
     const [mobileView, setMobileView] = useState<"list" | "editor">("list");
+    const [showList, setShowList] = useState(true);
 
     useEffect(() => {
         if (!initData) { setLoading(false); return; }
@@ -234,6 +244,14 @@ export default function JournalPage({ initData }: JournalPageProps) {
                 {/* macOS-style titlebar — desktop only */}
                 <div className="journal-titlebar">
                     <div className="journal-toolbar-icons">
+                        <button
+                            type="button"
+                            className="journal-icon-btn"
+                            onClick={() => setShowList((v) => !v)}
+                            aria-label="Toggle notes list"
+                        >
+                            <IconSidebar />
+                        </button>
                         <button type="button" className="journal-icon-btn" onClick={handleCompose} aria-label="New note">
                             <IconCompose />
                         </button>
@@ -282,7 +300,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
 
                 <div className="journal-body">
                     {/* ---------- Notes list pane ---------- */}
-                    <div className={`journal-list-pane ${mobileView === "editor" ? "mobile-hidden" : ""}`}>
+                    <div className={`journal-list-pane ${mobileView === "editor" ? "mobile-hidden" : ""} ${!showList ? "journal-list-collapsed" : ""}`}>
                         <div className="journal-mobile-search">
                             <IconSearch />
                             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />

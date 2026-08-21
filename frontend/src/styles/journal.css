@@ -169,6 +169,12 @@
     overflow-y: auto;
 }
 
+@media (min-width: 901px) {
+    .journal-list-pane.journal-list-collapsed {
+        display: none;
+    }
+}
+
 .journal-month-group {
     padding: 4px 0 8px;
 }
