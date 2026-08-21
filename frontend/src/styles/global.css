@@ -43,30 +43,23 @@ button {
     cursor: pointer;
 }
 
-/* Base App Layout */
+/* NEW — replace with this */
 .app-shell {
     position: relative;
     display: flex;
     min-height: 100vh;
-    background: linear-gradient(
-            90deg,
-            #a56abd 0px,
-            #a56abd 168px,
-            #e7dbef 210px,
-            #f5ebfa 245px,
-            var(--bg-top) 280px,
-            var(--bg-mid) 100%
-    );
+    background: var(--bg-mid);
 }
 
+/* NEW */
 .app {
     flex: 1;
     min-width: 0;
     width: 100%;
-    max-width: 720px;
+    max-width: 1080px;
     min-height: 100vh;
-    margin: 0 auto;
-    padding: 32px 22px 56px;
+    margin: 0;
+    padding: 32px 32px 56px;
     /* .app is a query container so .dashboard-grid and .live-clock-card can
        respond to their actual available width, not the browser viewport
        (the sidebar eats variable horizontal space, so viewport width alone
@@ -96,10 +89,11 @@ button {
     margin-bottom: 38px;
 }
 
+/* NEW */
 .eyebrow {
     margin: 0 0 8px;
     color: var(--ink);
-    font-family: "Playfair Display", Georgia, serif;
+    font-family: "Raleway", sans-serif;
     font-size: 16px;
     font-weight: 700;
     letter-spacing: 0.04em;

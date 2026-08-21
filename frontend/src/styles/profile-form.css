@@ -27,6 +27,7 @@
     border: 1px solid var(--line, #E2E2E2);
 }
 
+/* NEW */
 .profile-summary-avatar {
     display: flex;
     align-items: center;
@@ -34,11 +35,19 @@
     width: 52px;
     height: 52px;
     flex-shrink: 0;
+    overflow: hidden;
     border-radius: 50%;
     background: var(--accent, #8EB69B);
     color: #FFFFFF;
     font-size: 18px;
     font-weight: 700;
+}
+
+.profile-summary-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
 }
 
 .profile-summary-text {

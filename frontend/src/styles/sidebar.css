@@ -1,128 +1,102 @@
+/* ---------- Desktop: macOS-style flat sidebar ---------- */
+
 .sidebar {
     position: relative;
     display: flex;
-    flex: 0 0 168px;
+    flex: 0 0 220px;
     flex-direction: column;
-    align-items: center;
-    gap: 24px;
-    width: 168px;
-    padding: 28px 18px;
-    border-right: none;
-    background: linear-gradient(165deg, #49225b 0%, #6e3482 45%, #a56abd 100%);
+    gap: 2px;
+    width: 220px;
+    padding: 18px 10px 20px;
+    background: var(--bg-bottom);
+    border-right: 1px solid var(--line);
     box-sizing: border-box;
 }
 
-.sidebar::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    right: -40px;
-    bottom: 0;
-    width: 40px;
-    background: linear-gradient(90deg, rgba(165, 106, 189, 0.5), rgba(231, 219, 239, 0.18) 60%, transparent);
-    pointer-events: none;
-}
-
-.sidebar-top {
+.sidebar-brand {
     display: flex;
     align-items: center;
-    justify-content: center;
-    width: 100%;
+    padding: 4px 8px 18px;
 }
 
-.sidebar-avatar {
-    position: relative;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 76px;
-    height: 76px;
-    min-width: 76px;
-    min-height: 76px;
-    max-width: 76px;
-    max-height: 76px;
-    aspect-ratio: 1 / 1;
-    flex: 0 0 76px;
-    align-self: center;
-    padding: 0;
-    overflow: hidden;
-    border: 2px solid rgba(245, 235, 250, 0.45);
-    border-radius: 50%;
-    color: #49225b;
-    background: #f5ebfa;
-    font-size: 24px;
+.sidebar-brand-name {
+    color: var(--ink);
+    font-size: 16px;
     font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.sidebar-account {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 6px 8px;
+    margin-bottom: 14px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    text-align: left;
     cursor: pointer;
+    transition: background 0.12s ease;
     box-sizing: border-box;
-    appearance: none;
-    transition: transform 0.15s ease;
 }
 
-.sidebar-avatar:active {
-    transform: scale(0.94);
+.sidebar-account:hover {
+    background: var(--card-alt);
 }
 
-.sidebar-avatar img {
+.sidebar-account-avatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--ink);
+    color: #ffffff;
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.sidebar-account-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
     display: block;
-    border: 0;
 }
 
-.sidebar-greeting {
+.sidebar-account-text {
     display: flex;
     flex-direction: column;
-    align-items: center;
-    width: 100%;
-    gap: 6px;
-    text-align: center;
+    gap: 1px;
+    min-width: 0;
 }
 
-.sidebar-eyebrow {
-    margin: 0;
-    color: #f5ebfa;
-    font-family: "Playfair Display", Georgia, serif;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.04em;
-}
-
-.sidebar-name {
-    margin: 0;
-    color: #ffffff;
-    font-size: 17px;
-    font-weight: 700;
-    line-height: 1.25;
-    letter-spacing: -0.02em;
-}
-
-.sidebar-subtitle {
-    max-width: 135px;
-    margin: 0;
-    color: #e7dbef;
-    font-size: 12px;
-    font-weight: 500;
-    line-height: 1.4;
-}
-
-/* iOS-style grouped nav list: a frosted white card sitting on the purple panel,
-   rows joined together with hairline dividers, colored icon badges + label + chevron
-   — same visual language as the Settings app grouped list. Desktop only; mobile uses
-   the flat bottom tab bar below instead. */
-
-.sidebar-nav-group {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-    margin-top: 12px;
-    border-radius: 12px;
+.sidebar-account-name {
+    color: var(--ink);
+    font-size: 13.5px;
+    font-weight: 600;
     overflow: hidden;
-    background: rgba(255, 255, 255, 0.94);
-    backdrop-filter: blur(12px) saturate(160%);
-    -webkit-backdrop-filter: blur(12px) saturate(160%);
-    box-shadow: 0 4px 18px rgba(30, 8, 40, 0.18);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-account-bio {
+    color: var(--ink-soft);
+    font-size: 11.5px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
 }
 
 .nav-row {
@@ -130,32 +104,37 @@
     align-items: center;
     gap: 10px;
     width: 100%;
-    padding: 10px 10px;
+    padding: 7px 9px;
     border: none;
-    border-bottom: 1px solid rgba(60, 20, 70, 0.08);
+    border-radius: 7px;
     background: transparent;
+    color: var(--ink-soft);
     text-align: left;
+    font-size: 13.5px;
+    font-weight: 500;
     cursor: pointer;
-    transition: background 0.1s ease;
+    transition: background 0.12s ease, color 0.12s ease;
+    box-sizing: border-box;
 }
 
-.nav-row:last-child {
-    border-bottom: none;
+.nav-row:hover {
+    background: var(--card-alt);
+    color: var(--ink);
 }
 
-.nav-row:active {
-    background: rgba(73, 34, 91, 0.08);
+.nav-row.is-active {
+    background: var(--accent);
+    color: #ffffff;
 }
 
 .nav-row-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 26px;
-    height: 26px;
+    width: 17px;
+    height: 17px;
     flex-shrink: 0;
-    border-radius: 7px;
-    color: #ffffff;
+    color: inherit;
 }
 
 .nav-row-icon svg {
@@ -163,37 +142,20 @@
     height: 15px;
 }
 
-/* Badge colors pulled from the app's real palette instead of iOS system
-   colors — mid purple + brass accent (both already used as CTA/brand
-   colors elsewhere) plus a sage green and the softer purple variant, so
-   these read as native to the app rather than borrowed from iOS. */
-.nav-row-icon-blue { background: #6e3482; }    /* --purple-mid */
-.nav-row-icon-orange { background: #b8863a; }  /* --accent (brass) */
-.nav-row-icon-green { background: #8EB69B; }   /* sage, matches nav hover */
-.nav-row-icon-purple { background: #a56abd; }  /* --purple-soft */
-
 .nav-row-label {
     flex: 1;
-    color: #1A1A1A;
-    font-size: 13px;
-    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
-.nav-row-chevron {
-    width: 14px;
-    height: 14px;
-    flex-shrink: 0;
-    color: #C6C6C8;
-}
-
-/* Bottom tab bar for mobile — flat and clean, no purple/glow, matching iOS's
-   tab bar aesthetic (white background, gray icons, dark active tap state). */
-
+/* Bottom tab bar for mobile — flat and clean, iOS tab bar aesthetic.
+   Hidden on desktop; the macOS-style list above is desktop-only too. */
 .sidebar-tabbar {
     display: none;
 }
 
-/* Mobile: collapse to a fixed bottom icon bar */
+/* Mobile: collapse to a fixed bottom icon bar — unchanged iOS-style bar */
 @media (max-width: 680px) {
     .sidebar {
         position: fixed;
@@ -210,16 +172,13 @@
         gap: 0;
         padding: 0;
         background: transparent;
+        border-right: none;
         box-shadow: none;
     }
 
-    .sidebar::after {
-        display: none;
-    }
-
-    .sidebar-top,
-    .sidebar-greeting,
-    .sidebar-nav-group {
+    .sidebar-brand,
+    .sidebar-account,
+    .sidebar-nav {
         display: none;
     }
 
@@ -252,7 +211,7 @@
     }
 
     .tab-item:active {
-        color: #49225b;
+        color: var(--accent);
         transform: scale(0.94);
     }
 

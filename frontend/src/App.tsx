@@ -3,6 +3,7 @@ import Sidebar from "./components/Sidebar";
 import ProfileForm from "./components/ProfileForm";
 import StudyCalendar from "./components/StudyCalendar";
 import GroupsPage from "./components/GroupsPage";
+import JournalPage from "./components/JournalPage";
 import WeeklyTimetable from "./components/WeeklyTimetable";
 import LiveClock from "./components/LiveClock";
 import { getMyProfile, type StudentProfile } from "./data/profileApi";
@@ -15,6 +16,7 @@ import "./styles/calendar.css";
 import "./styles/groups.css";
 import "./styles/timetable.css";
 import "./styles/schedule-editor.css";
+import "./styles/journal.css";
 
 interface TelegramWebApp {
     ready: () => void;
@@ -36,7 +38,7 @@ declare global {
     interface Window { Telegram?: { WebApp?: TelegramWebApp } }
 }
 
-type View = "dashboard" | "groups";
+type View = "dashboard" | "groups" | "journal";
 
 function DashboardSkeleton() {
     return (
@@ -95,13 +97,20 @@ function App() {
         setView("groups");
     };
 
+    const goToJournal = () => {
+        setEditingProfile(false);
+        setView("journal");
+    };
+
     const sidebar = (
         <Sidebar
             firstName={activeProfile.firstName}
             photoUrl={activeProfile.photoUrl ?? undefined}
+            bio={activeProfile.bio}
             onProfileClick={() => setEditingProfile(true)}
             onDashboardClick={goToDashboard}
             onGroupsClick={goToGroups}
+            onJournalClick={goToJournal}
         />
     );
 
@@ -138,7 +147,7 @@ function App() {
             <main className="app">
                 {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
                 <div key={view} className="view-transition">
-                    {view === "dashboard" ? (
+                    {view === "dashboard" && (
                         <>
                             <LiveClock />
                             <div className="dashboard-grid">
@@ -146,8 +155,12 @@ function App() {
                                 <WeeklyTimetable initData={initData} universityName={activeProfile.university?.name} />
                             </div>
                         </>
-                    ) : (
+                    )}
+                    {view === "groups" && (
                         <GroupsPage initData={initData} onEditProfile={() => setEditingProfile(true)} />
+                    )}
+                    {view === "journal" && (
+                        <JournalPage initData={initData} />
                     )}
                 </div>
             </main>
