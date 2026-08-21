@@ -44,6 +44,14 @@ export function updateJournalEntry(initData: string, id: number, content: string
     });
 }
 
-export function deleteJournalEntry(initData: string, id: number): Promise<void> {
-    return request<void>(`/api/journal/${id}`, initData, { method: "DELETE" });
+export async function deleteJournalEntry(initData: string, id: number): Promise<void> {
+    const res = await fetch(`${API_BASE}/api/journal/${id}`, {
+        method: "DELETE",
+        headers: { "X-Telegram-Init-Data": initData },
+    });
+    if (res.status === 404) return; // already gone — treat as success, not an error
+    if (!res.ok) {
+        const bodyText = await res.text().catch(() => "");
+        throw new Error(bodyText || `Request failed with status ${res.status}`);
+    }
 }
