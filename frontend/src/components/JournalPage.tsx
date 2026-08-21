@@ -1,14 +1,20 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import Toast from "./Toast";
 import {
     createJournalEntry,
     deleteJournalEntry,
     getMyJournalEntries,
+    togglePinJournalEntry,
     updateJournalEntry,
     type JournalEntry,
 } from "../data/journalApi";
+import { haptics } from "../data/haptics";
 
 type JournalPageProps = { initData: string };
+
+const SWIPE_OPEN_OFFSET = -72;
+const SWIPE_THRESHOLD = -44;
+const SWIPE_MAX = -88;
 
 function formatRowDate(iso: string): string {
     return new Date(iso).toLocaleDateString("default", { month: "short", day: "numeric" });
@@ -40,6 +46,13 @@ function notePreview(content: string): string {
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
     const rest = lines.slice(1).join(" ").trim();
     return rest.length > 80 ? `${rest.slice(0, 80)}…` : rest;
+}
+
+function sortEntries(list: JournalEntry[]): JournalEntry[] {
+    return [...list].sort((a, b) => {
+        if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
+        return b.updatedAt.localeCompare(a.updatedAt);
+    });
 }
 
 function groupByMonth(list: JournalEntry[]) {
@@ -102,6 +115,14 @@ function IconChevronLeft() {
     );
 }
 
+function IconStar({ filled }: { filled: boolean }) {
+    return (
+        <svg viewBox="0 0 24 24" width="13" height="13" fill={filled ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round">
+            <path d="M12 3.5l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9-4.3-4.2 5.9-.8Z" />
+        </svg>
+    );
+}
+
 export default function JournalPage({ initData }: JournalPageProps) {
     const [entries, setEntries] = useState<JournalEntry[]>([]);
     const [loading, setLoading] = useState(Boolean(initData));
@@ -114,15 +135,25 @@ export default function JournalPage({ initData }: JournalPageProps) {
     const [mobileView, setMobileView] = useState<"list" | "editor">("list");
     const [showList, setShowList] = useState(true);
 
+    // Swipe-to-delete state (mobile list rows)
+    const [swipedRowId, setSwipedRowId] = useState<number | null>(null);
+    const [dragDx, setDragDx] = useState(0);
+    const touchStartX = useRef(0);
+    const dragBaseline = useRef(0);
+    const draggingId = useRef<number | null>(null);
+
+    const searchInputRef = useRef<HTMLInputElement>(null);
+
     useEffect(() => {
         if (!initData) { setLoading(false); return; }
         setLoading(true);
         getMyJournalEntries(initData)
             .then((all) => {
-                setEntries(all);
-                if (all.length > 0) {
-                    setSelectedId(all[0].id);
-                    setContent(all[0].content);
+                const sorted = sortEntries(all);
+                setEntries(sorted);
+                if (sorted.length > 0) {
+                    setSelectedId(sorted[0].id);
+                    setContent(sorted[0].content);
                 }
             })
             .catch((e) => setError((e as Error).message))
@@ -141,12 +172,14 @@ export default function JournalPage({ initData }: JournalPageProps) {
                 const updated = await updateJournalEntry(initData, selectedId, content);
                 setEntries((prev) => {
                     const rest = prev.filter((e) => e.id !== updated.id);
-                    return [updated, ...rest].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+                    return sortEntries([updated, ...rest]);
                 });
                 setSaveState("saved");
+                haptics.success();
             } catch (e) {
                 setError((e as Error).message);
                 setSaveState("idle");
+                haptics.error();
             }
         }, 800);
 
@@ -160,7 +193,9 @@ export default function JournalPage({ initData }: JournalPageProps) {
         return entries.filter((e) => e.content.toLowerCase().includes(q));
     }, [entries, query]);
 
-    const groups = useMemo(() => groupByMonth(filteredEntries), [filteredEntries]);
+    const pinnedEntries = useMemo(() => filteredEntries.filter((e) => e.pinned), [filteredEntries]);
+    const unpinnedEntries = useMemo(() => filteredEntries.filter((e) => !e.pinned), [filteredEntries]);
+    const groups = useMemo(() => groupByMonth(unpinnedEntries), [unpinnedEntries]);
 
     // Discard a note that was opened but never written into, so blank drafts don't pile up.
     async function discardIfEmpty(id: number | null) {
@@ -186,11 +221,12 @@ export default function JournalPage({ initData }: JournalPageProps) {
     }
 
     async function handleCompose() {
+        haptics.tap("light");
         setError(null);
         await discardIfEmpty(selectedId);
         try {
             const created = await createJournalEntry(initData);
-            setEntries((prev) => [created, ...prev]);
+            setEntries((prev) => sortEntries([created, ...prev]));
             setSelectedId(created.id);
             setContent("");
             setSaveState("idle");
@@ -198,6 +234,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
         } catch (e) {
             console.error("Failed to create note:", e);
             setError((e as Error).message || "Couldn't create a new note. Try again.");
+            haptics.error();
         }
     }
 
@@ -206,25 +243,158 @@ export default function JournalPage({ initData }: JournalPageProps) {
         setMobileView("list");
     }
 
-    async function handleDeleteSelected() {
-        if (selectedId == null) return;
+    async function handleDeleteNote(id: number) {
         if (!window.confirm("Delete this note?")) return;
         try {
-            await deleteJournalEntry(initData, selectedId);
-            const remaining = entries.filter((e) => e.id !== selectedId);
+            await deleteJournalEntry(initData, id);
+            const remaining = entries.filter((e) => e.id !== id);
             setEntries(remaining);
-            const next = remaining.length > 0 ? remaining[0].id : null;
-            setSelectedId(next);
-            setContent(next != null ? remaining.find((e) => e.id === next)?.content ?? "" : "");
-            setSaveState("idle");
-            setMobileView("list");
+            if (id === selectedId) {
+                const next = remaining.length > 0 ? remaining[0].id : null;
+                setSelectedId(next);
+                setContent(next != null ? remaining.find((e) => e.id === next)?.content ?? "" : "");
+                setSaveState("idle");
+                setMobileView("list");
+            }
+            setSwipedRowId((cur) => (cur === id ? null : cur));
             setToastMessage("Note deleted");
+            haptics.warning();
         } catch (e) {
             setError((e as Error).message);
+            haptics.error();
         }
     }
 
+    async function handleTogglePin(id: number, e?: MouseEvent) {
+        e?.stopPropagation();
+        haptics.tap("light");
+        try {
+            const updated = await togglePinJournalEntry(initData, id);
+            setEntries((prev) => {
+                const rest = prev.filter((x) => x.id !== updated.id);
+                return sortEntries([...rest, updated]);
+            });
+        } catch (e) {
+            setError((e as Error).message);
+            haptics.error();
+        }
+    }
+
+    function closeSwipe() {
+        setSwipedRowId(null);
+        setDragDx(0);
+    }
+
+    function handleTouchStart(id: number, e: TouchEvent) {
+        touchStartX.current = e.touches[0].clientX;
+        dragBaseline.current = swipedRowId === id ? SWIPE_OPEN_OFFSET : 0;
+        draggingId.current = id;
+        setDragDx(dragBaseline.current);
+    }
+
+    function handleTouchMove(id: number, e: TouchEvent) {
+        if (draggingId.current !== id) return;
+        const delta = e.touches[0].clientX - touchStartX.current;
+        const next = Math.min(0, Math.max(dragBaseline.current + delta, SWIPE_MAX));
+        const wasOpen = dragDx <= SWIPE_THRESHOLD;
+        const nowOpen = next <= SWIPE_THRESHOLD;
+        if (wasOpen !== nowOpen) haptics.selection(); // tiny tick as the swipe crosses the reveal threshold
+        setDragDx(next);
+    }
+
+    function handleTouchEnd(id: number) {
+        if (draggingId.current !== id) return;
+        draggingId.current = null;
+        if (dragDx <= SWIPE_THRESHOLD) {
+            setSwipedRowId(id);
+            setDragDx(SWIPE_OPEN_OFFSET);
+        } else {
+            setSwipedRowId(null);
+            setDragDx(0);
+        }
+    }
+
+    // Desktop keyboard shortcuts: ⌘N new note, ⌘F focus search, ⌘⌫ delete selected.
+    useEffect(() => {
+        if (!initData) return;
+
+        function handleKeyDown(e: KeyboardEvent) {
+            const mod = e.metaKey || e.ctrlKey;
+            if (!mod) return;
+
+            const key = e.key.toLowerCase();
+
+            if (key === "n") {
+                e.preventDefault();
+                handleCompose();
+                return;
+            }
+
+            if (key === "f") {
+                e.preventDefault();
+                searchInputRef.current?.focus();
+                return;
+            }
+
+            if (e.key === "Backspace") {
+                const active = document.activeElement;
+                const isTyping = active instanceof HTMLTextAreaElement || active instanceof HTMLInputElement;
+                if (isTyping || selectedId == null) return;
+                e.preventDefault();
+                handleDeleteNote(selectedId);
+            }
+        }
+
+        window.addEventListener("keydown", handleKeyDown);
+        return () => window.removeEventListener("keydown", handleKeyDown);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initData, selectedId, entries]);
+
     const selectedEntry = entries.find((e) => e.id === selectedId) ?? null;
+
+    function renderNoteRow(entry: JournalEntry) {
+        const isSwiped = swipedRowId === entry.id;
+        const liveDx = draggingId.current === entry.id ? dragDx : isSwiped ? SWIPE_OPEN_OFFSET : 0;
+
+        return (
+            <div key={entry.id} className="journal-row-wrapper">
+                <button
+                    type="button"
+                    className="journal-swipe-delete"
+                    onClick={() => handleDeleteNote(entry.id)}
+                    aria-label="Delete note"
+                >
+                    <IconTrash />
+                </button>
+                <div
+                    className={`journal-note-row ${entry.id === selectedId ? "selected" : ""}`}
+                    style={{ transform: `translateX(${liveDx}px)` }}
+                    onClick={() => (isSwiped ? closeSwipe() : selectNote(entry.id))}
+                    onTouchStart={(e) => handleTouchStart(entry.id, e)}
+                    onTouchMove={(e) => handleTouchMove(entry.id, e)}
+                    onTouchEnd={() => handleTouchEnd(entry.id)}
+                    role="button"
+                    tabIndex={0}
+                >
+                    <button
+                        type="button"
+                        className={`journal-pin-star ${entry.pinned ? "pinned" : ""}`}
+                        onClick={(e) => handleTogglePin(entry.id, e)}
+                        aria-label={entry.pinned ? "Unpin note" : "Pin note"}
+                    >
+                        <IconStar filled={entry.pinned} />
+                    </button>
+                    <span className="journal-note-row-text">
+                        <span className="journal-note-row-title">{noteTitle(entry.content)}</span>
+                        <span className="journal-note-row-sub">
+                            {formatRowDate(entry.updatedAt)}
+                            {notePreview(entry.content) && `  ${notePreview(entry.content)}`}
+                        </span>
+                    </span>
+                </div>
+            </div>
+        );
+    }
 
     if (!initData) {
         return (
@@ -258,7 +428,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
                         <button
                             type="button"
                             className="journal-icon-btn"
-                            onClick={handleDeleteSelected}
+                            onClick={() => selectedId != null && handleDeleteNote(selectedId)}
                             disabled={selectedId == null}
                             aria-label="Delete note"
                         >
@@ -267,7 +437,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
                     </div>
                     <div className="journal-search">
                         <IconSearch />
-                        <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
+                        <input ref={searchInputRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
                     </div>
                 </div>
 
@@ -282,7 +452,12 @@ export default function JournalPage({ initData }: JournalPageProps) {
                             <span className="ios-nav-status">
                                 {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "\u00A0"}
                             </span>
-                            <button type="button" className="journal-icon-btn" onClick={handleDeleteSelected} aria-label="Delete note">
+                            <button
+                                type="button"
+                                className="journal-icon-btn"
+                                onClick={() => selectedId != null && handleDeleteNote(selectedId)}
+                                aria-label="Delete note"
+                            >
                                 <IconTrash />
                             </button>
                         </>
@@ -300,7 +475,10 @@ export default function JournalPage({ initData }: JournalPageProps) {
 
                 <div className="journal-body">
                     {/* ---------- Notes list pane ---------- */}
-                    <div className={`journal-list-pane ${mobileView === "editor" ? "mobile-hidden" : ""} ${!showList ? "journal-list-collapsed" : ""}`}>
+                    <div
+                        className={`journal-list-pane ${mobileView === "editor" ? "mobile-hidden" : ""} ${!showList ? "journal-list-collapsed" : ""}`}
+                        onClick={() => swipedRowId != null && closeSwipe()}
+                    >
                         <div className="journal-mobile-search">
                             <IconSearch />
                             <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
@@ -308,7 +486,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
 
                         {loading && <p className="subtitle" style={{ padding: "16px" }}>Loading your journal…</p>}
 
-                        {!loading && groups.length === 0 && (
+                        {!loading && pinnedEntries.length === 0 && groups.length === 0 && (
                             <div className="calendar-empty-state">
                                 <span className="empty-state-icon">📔</span>
                                 <p className="subtitle" style={{ fontSize: "13px" }}>
@@ -317,23 +495,17 @@ export default function JournalPage({ initData }: JournalPageProps) {
                             </div>
                         )}
 
+                        {!loading && pinnedEntries.length > 0 && (
+                            <div className="journal-month-group">
+                                <p className="journal-month-label">Pinned</p>
+                                {pinnedEntries.map((entry) => renderNoteRow(entry))}
+                            </div>
+                        )}
+
                         {!loading && groups.map((group) => (
                             <div key={group.label} className="journal-month-group">
                                 <p className="journal-month-label">{group.label}</p>
-                                {group.items.map((entry) => (
-                                    <button
-                                        key={entry.id}
-                                        type="button"
-                                        className={`journal-note-row ${entry.id === selectedId ? "selected" : ""}`}
-                                        onClick={() => selectNote(entry.id)}
-                                    >
-                                        <span className="journal-note-row-title">{noteTitle(entry.content)}</span>
-                                        <span className="journal-note-row-sub">
-                                            {formatRowDate(entry.updatedAt)}
-                                            {notePreview(entry.content) && `  ${notePreview(entry.content)}`}
-                                        </span>
-                                    </button>
-                                ))}
+                                {group.items.map((entry) => renderNoteRow(entry))}
                             </div>
                         ))}
                     </div>

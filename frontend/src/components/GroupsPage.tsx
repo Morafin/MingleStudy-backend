@@ -1,10 +1,13 @@
 import { useEffect, useState } from "react";
 import { getActivityStatus, getMyGroup, type MyGroup } from "../data/profileApi";
+import { haptics } from "../data/haptics";
 
 type GroupsPageProps = {
     initData: string;
     onEditProfile: () => void;
 };
+
+const BOT_USERNAME = "MingleStudyAppBot";
 
 function GroupsSkeleton() {
     return (
@@ -20,10 +23,23 @@ function GroupsSkeleton() {
     );
 }
 
+function IconShare() {
+    return (
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="18" cy="5" r="2.5" />
+            <circle cx="6" cy="12" r="2.5" />
+            <circle cx="18" cy="19" r="2.5" />
+            <line x1="8.2" y1="10.8" x2="15.8" y2="6.2" />
+            <line x1="8.2" y1="13.2" x2="15.8" y2="17.8" />
+        </svg>
+    );
+}
+
 export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps) {
     const [group, setGroup] = useState<MyGroup | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
 
     useEffect(() => {
         if (!initData) {
@@ -37,6 +53,33 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
             .catch((err) => setError(err instanceof Error ? err.message : String(err)))
             .finally(() => setLoading(false));
     }, [initData]);
+
+    async function handleInvite(universityId: number) {
+        const link = `https://t.me/${BOT_USERNAME}?startapp=uni_${universityId}`;
+        const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent("Join me on MingleStudy!")}`;
+
+        const tg = window.Telegram?.WebApp as unknown as {
+            openTelegramLink?: (url: string) => void;
+            HapticFeedback?: { impactOccurred: (style: string) => void };
+        } | undefined;
+
+        haptics.tap("medium");
+
+        if (tg?.openTelegramLink) {
+            tg.openTelegramLink(shareUrl);
+            return;
+        }
+
+        // Fallback outside Telegram: copy the link instead
+        try {
+            await navigator.clipboard.writeText(link);
+            setCopied(true);
+            haptics.success();
+            setTimeout(() => setCopied(false), 2200);
+        } catch {
+            haptics.error();
+        }
+    }
 
     if (!initData) {
         return (
@@ -97,6 +140,13 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
         <section className="groups-section">
             <div className="section-heading">
                 <h2>Groups</h2>
+                <button
+                    type="button"
+                    className="schedule-add-btn"
+                    onClick={() => handleInvite(university.id)}
+                >
+                    <IconShare /> {copied ? "Link copied!" : "Invite classmate"}
+                </button>
             </div>
 
             <div className="groups-summary-card">
@@ -112,6 +162,13 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                     <p className="subtitle">
                         No one else from {university.name} has joined yet. Invite your classmates!
                     </p>
+                    <button
+                        type="button"
+                        className="btn-primary bubble-button"
+                        onClick={() => handleInvite(university.id)}
+                    >
+                        <IconShare /> {copied ? "Link copied!" : "Invite a classmate"}
+                    </button>
                 </div>
             ) : (
                 <>
@@ -151,7 +208,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                                             href={`https://t.me/${member.username}`}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            onClick={(e) => e.stopPropagation()}
+                                            onClick={(e) => { e.stopPropagation(); haptics.tap("light"); }}
                                         >
                                             Message
                                         </a>

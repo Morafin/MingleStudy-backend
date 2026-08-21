@@ -27,6 +27,12 @@ export type MyGroup = {
   members: GroupMember[];
 };
 
+export type JoinInviteResult = {
+  joined: boolean;
+  reason: "already_in_this_university" | "already_in_other_university" | null;
+  profile: StudentProfile;
+};
+
 const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 const authHeaders = (initData: string) => ({
@@ -60,6 +66,8 @@ export const addUniversity = (initData: string, name: string) =>
 export const saveProfile = (initData: string, values: { firstName: string; lastName: string; bio: string; universityId: number }) =>
     request<StudentProfile>("/api/me", initData, { method: "PUT", body: JSON.stringify(values) });
 export const getMyGroup = (initData: string) => request<MyGroup>("/api/groups/mine", initData);
+export const joinViaInvite = (initData: string, universityId: number) =>
+    request<JoinInviteResult>("/api/invite/join", initData, { method: "POST", body: JSON.stringify({ universityId }) });
 
 // Turns a lastSeenAt ISO timestamp into a short human-readable activity label.
 // Returns null if there's nothing meaningful to show (no timestamp, or too long ago).

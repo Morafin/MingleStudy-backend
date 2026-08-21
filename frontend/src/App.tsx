@@ -4,9 +4,12 @@ import ProfileForm from "./components/ProfileForm";
 import StudyCalendar from "./components/StudyCalendar";
 import GroupsPage from "./components/GroupsPage";
 import JournalPage from "./components/JournalPage";
+import SettingsPage from "./components/SettingsPage";
 import WeeklyTimetable from "./components/WeeklyTimetable";
 import LiveClock from "./components/LiveClock";
-import { getMyProfile, type StudentProfile } from "./data/profileApi";
+import Toast from "./components/Toast";
+import { getMyProfile, joinViaInvite, type StudentProfile } from "./data/profileApi";
+import { haptics } from "./data/haptics";
 
 // Modular CSS imports replacing dashboard.css
 import "./styles/global.css";
@@ -17,6 +20,7 @@ import "./styles/groups.css";
 import "./styles/timetable.css";
 import "./styles/schedule-editor.css";
 import "./styles/journal.css";
+import "./styles/settings.css";
 
 interface TelegramWebApp {
     ready: () => void;
@@ -31,6 +35,16 @@ interface TelegramWebApp {
             username?: string;
             photo_url?: string;
         };
+        start_param?: string;
+    };
+    colorScheme?: "light" | "dark";
+    themeParams?: Record<string, string | undefined>;
+    onEvent?: (eventType: string, callback: () => void) => void;
+    offEvent?: (eventType: string, callback: () => void) => void;
+    HapticFeedback?: {
+        impactOccurred: (style: string) => void;
+        notificationOccurred: (type: string) => void;
+        selectionChanged: () => void;
     };
 }
 
@@ -38,7 +52,19 @@ declare global {
     interface Window { Telegram?: { WebApp?: TelegramWebApp } }
 }
 
-type View = "dashboard" | "groups" | "journal";
+type View = "dashboard" | "groups" | "journal" | "settings";
+type ThemePreference = "system" | "light" | "dark";
+
+const THEME_STORAGE_KEY = "minglestudy-theme-preference";
+// A start_param we've already processed this session, so re-renders / StrictMode's double-invoke
+// don't fire the join request twice.
+const INVITE_PARAM_PATTERN = /^uni_(\d+)$/;
+
+function getStoredThemePreference(): ThemePreference {
+    if (typeof window === "undefined") return "system";
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    return stored === "light" || stored === "dark" || stored === "system" ? stored : "system";
+}
 
 function DashboardSkeleton() {
     return (
@@ -60,11 +86,20 @@ function App() {
     const telegram = window.Telegram?.WebApp;
     const initData = telegram?.initData ?? "";
     const telegramUser = telegram?.initDataUnsafe?.user;
+    const startParam = telegram?.initDataUnsafe?.start_param ?? "";
     const [profile, setProfile] = useState<StudentProfile | null>(null);
     const [loading, setLoading] = useState(Boolean(initData));
     const [editingProfile, setEditingProfile] = useState(false);
     const [view, setView] = useState<View>("dashboard");
+    const [themePreference, setThemePreferenceState] = useState<ThemePreference>(getStoredThemePreference);
+    const [inviteToast, setInviteToast] = useState<string | null>(null);
+    const [inviteHandled, setInviteHandled] = useState(false);
     const isTelegram = Boolean(initData);
+
+    const setThemePreference = (preference: ThemePreference) => {
+        setThemePreferenceState(preference);
+        window.localStorage.setItem(THEME_STORAGE_KEY, preference);
+    };
 
     const browserProfile = useMemo<StudentProfile>(() => ({
         telegramId: 0,
@@ -84,6 +119,53 @@ function App() {
         getMyProfile(initData).then(setProfile).catch(() => setProfile(null)).finally(() => setLoading(false));
     }, [initData, telegram]);
 
+    // Deep-link auto-join: t.me/<bot>?startapp=uni_<id> lands here as start_param.
+    // Runs once profile has loaded, so we know whether the recipient already has a university.
+    useEffect(() => {
+        if (!initData || loading || inviteHandled) return;
+
+        const match = INVITE_PARAM_PATTERN.exec(startParam);
+        if (!match) { setInviteHandled(true); return; }
+
+        const universityId = Number(match[1]);
+        setInviteHandled(true);
+
+        joinViaInvite(initData, universityId)
+            .then((result) => {
+                setProfile(result.profile);
+                if (result.joined) {
+                    haptics.success();
+                    setInviteToast(`Joined ${result.profile.university?.name ?? "your classmate's university"}!`);
+                    setView("groups");
+                } else if (result.reason === "already_in_other_university") {
+                    setInviteToast("You're already part of a different university group.");
+                }
+                // "already_in_this_university": nothing to announce, they're already there.
+            })
+            .catch(() => {
+                haptics.error();
+                setInviteToast("Couldn't process that invite link. Try again?");
+            });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initData, loading, inviteHandled, startParam]);
+
+    // Apply the effective theme to the document. Manual Light/Dark picks in Settings
+    // win outright; "System" mirrors Telegram's live colorScheme and stays subscribed
+    // to theme-change events so it keeps following if the user flips Telegram's theme.
+    useEffect(() => {
+        const applyTheme = () => {
+            const effective = themePreference === "system" ? (telegram?.colorScheme ?? "light") : themePreference;
+            document.documentElement.dataset.theme = effective;
+        };
+
+        applyTheme();
+
+        if (themePreference === "system" && telegram) {
+            telegram.onEvent?.("themeChanged", applyTheme);
+            return () => telegram.offEvent?.("themeChanged", applyTheme);
+        }
+    }, [telegram, themePreference]);
+
     const activeProfile = profile ?? browserProfile;
     const showProfileForm = isTelegram && (!profile?.onboardingComplete || editingProfile);
 
@@ -102,6 +184,11 @@ function App() {
         setView("journal");
     };
 
+    const goToSettings = () => {
+        setEditingProfile(false);
+        setView("settings");
+    };
+
     const sidebar = (
         <Sidebar
             firstName={activeProfile.firstName}
@@ -111,6 +198,7 @@ function App() {
             onDashboardClick={goToDashboard}
             onGroupsClick={goToGroups}
             onJournalClick={goToJournal}
+            onSettingsClick={goToSettings}
         />
     );
 
@@ -145,6 +233,7 @@ function App() {
         <div className="app-shell">
             {sidebar}
             <main className="app">
+                {inviteToast && <Toast message={inviteToast} onDismiss={() => setInviteToast(null)} />}
                 {!isTelegram && <p className="preview-banner">Preview mode — open MingleStudy in Telegram to create a real profile.</p>}
                 <div key={view} className="view-transition">
                     {view === "dashboard" && (
@@ -161,6 +250,16 @@ function App() {
                     )}
                     {view === "journal" && (
                         <JournalPage initData={initData} />
+                    )}
+                    {view === "settings" && (
+                        <SettingsPage
+                            firstName={activeProfile.firstName}
+                            photoUrl={activeProfile.photoUrl ?? undefined}
+                            bio={activeProfile.bio}
+                            onProfileClick={() => setEditingProfile(true)}
+                            themePreference={themePreference}
+                            onThemePreferenceChange={setThemePreference}
+                        />
                     )}
                 </div>
             </main>

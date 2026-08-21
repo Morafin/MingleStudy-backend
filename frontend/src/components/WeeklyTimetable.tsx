@@ -10,6 +10,7 @@ import {
     type Weekday,
 } from "../data/scheduleApi";
 import { ISFT_PRESET, JS_DAY_TO_WEEKDAY, WEEKDAYS, dayLabel } from "../data/timetableData";
+import { haptics } from "../data/haptics";
 
 type WeeklyTimetableProps = {
     initData: string;
@@ -82,12 +83,14 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
         : null;
 
     const openNewForm = (day?: Weekday) => {
+        haptics.tap("light");
         setForm({ ...EMPTY_FORM, day: day ?? "MONDAY" });
         setEditingId("new");
         setError(null);
     };
 
     const openEditForm = (entry: ScheduleEntry) => {
+        haptics.tap("light");
         setForm({
             day: entry.day,
             startTime: entry.startTime,
@@ -107,8 +110,8 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
     };
 
     const handleSave = async () => {
-        if (!form.subject.trim()) { setError("Subject is required."); return; }
-        if (form.endTime <= form.startTime) { setError("End time must be after start time."); return; }
+        if (!form.subject.trim()) { setError("Subject is required."); haptics.error(); return; }
+        if (form.endTime <= form.startTime) { setError("End time must be after start time."); haptics.error(); return; }
 
         setSaving(true);
         setError(null);
@@ -127,15 +130,18 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                 const updated = await updateScheduleEntry(initData, editingId, payload);
                 setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
             }
+            haptics.success();
             closeForm();
         } catch (e) {
             setError((e as Error).message);
+            haptics.error();
         } finally {
             setSaving(false);
         }
     };
 
     const requestDelete = (id: number) => {
+        haptics.tap("medium");
         setError(null);
         setPendingDeleteId(id);
     };
@@ -152,8 +158,10 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
         try {
             await deleteScheduleEntry(initData, id);
             setEntries((prev) => prev.filter((e) => e.id !== id));
+            haptics.warning();
         } catch (e) {
             setError((e as Error).message);
+            haptics.error();
         } finally {
             setDeletingId(null);
             setPendingDeleteId(null);
@@ -166,8 +174,10 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
         try {
             const created = await createScheduleEntriesBulk(initData, ISFT_PRESET);
             setEntries(created);
+            haptics.success();
         } catch (e) {
             setError((e as Error).message);
+            haptics.error();
         } finally {
             setSaving(false);
         }
