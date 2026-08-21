@@ -2,14 +2,9 @@ const API_BASE = "https://minglestudy-backend-production.up.railway.app";
 
 export type JournalEntry = {
     id: number;
-    date: string; // YYYY-MM-DD
     content: string;
+    createdAt: string;
     updatedAt: string;
-};
-
-type JournalEntryInput = {
-    date: string;
-    content: string;
 };
 
 async function request<T>(path: string, initData: string, options: RequestInit = {}): Promise<T> {
@@ -35,10 +30,17 @@ export function getMyJournalEntries(initData: string): Promise<JournalEntry[]> {
     return request<JournalEntry[]>("/api/journal/mine", initData);
 }
 
-export function saveJournalEntry(initData: string, input: JournalEntryInput): Promise<JournalEntry> {
+export function createJournalEntry(initData: string, content: string = ""): Promise<JournalEntry> {
     return request<JournalEntry>("/api/journal", initData, {
         method: "POST",
-        body: JSON.stringify(input),
+        body: JSON.stringify({ content }),
+    });
+}
+
+export function updateJournalEntry(initData: string, id: number, content: string): Promise<JournalEntry> {
+    return request<JournalEntry>(`/api/journal/${id}`, initData, {
+        method: "PUT",
+        body: JSON.stringify({ content }),
     });
 }
 
