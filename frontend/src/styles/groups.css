@@ -2,6 +2,22 @@
     margin-bottom: 36px;
 }
 
+/* Override the shared .section-heading row layout for this page only: the invite
+   button reads as a secondary action, not something that should fight the "Groups"
+   title for space on one line. Stacking it left-aligned below the title gives it
+   room to breathe instead of crowding the heading, and avoids touching the shared
+   .section-heading rule other pages (e.g. schedule's "+ Add class") depend on. */
+.groups-section .section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 22px;
+}
+
+.groups-section .section-heading h2 {
+    margin: 0;
+}
+
 .groups-summary-card {
     display: flex;
     flex-direction: column;
@@ -101,14 +117,14 @@
 .groups-invite-btn {
     display: inline-flex;
     align-items: center;
-    gap: 6px;
+    gap: 7px;
     flex-shrink: 0;
-    padding: 8px 16px 8px 14px;
+    padding: 9px 18px 9px 15px;
     border: none;
     border-radius: 20px;
     background: var(--accent);
     color: var(--accent-ink);
-    font-size: 13px;
+    font-size: 13.5px;
     font-weight: 700;
     line-height: 1.2;
     white-space: nowrap;
