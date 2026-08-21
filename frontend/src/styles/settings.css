@@ -1,0 +1,28 @@
+.settings-section {
+    margin-bottom: 36px;
+}
+
+.settings-avatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--ink);
+    color: var(--card-alt);
+    font-size: 12.5px;
+    font-weight: 700;
+}
+
+.settings-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.settings-row-static {
+    cursor: default;
+}
