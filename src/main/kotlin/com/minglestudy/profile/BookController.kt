@@ -68,9 +68,31 @@ class BookController(
 
         if (file != null && !file.isEmpty) {
             val dir = File(storagePath)
-            if (!dir.exists()) dir.mkdirs()
+            if (!dir.exists() && !dir.mkdirs()) {
+                throw ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Could not create storage directory at $storagePath — check that it exists and is writable (e.g. a mounted volume on Railway).",
+                )
+            }
             val storedName = "${UUID.randomUUID()}.pdf"
-            file.transferTo(File(dir, storedName))
+            val target = File(dir, storedName)
+
+            // Copy the stream manually rather than relying on MultipartFile.transferTo()/Part.write(),
+            // which resolves relative paths against Tomcat's internal multipart temp location and can
+            // silently write to the wrong (nonexistent) directory if that location is misconfigured.
+            try {
+                file.inputStream.use { input ->
+                    target.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+            } catch (e: Exception) {
+                throw ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR,
+                    "Failed to save uploaded file: ${e.message}",
+                )
+            }
+
             book.storedFileName = storedName
         } else if (!externalFileUrl.isNullOrBlank()) {
             book.fileUrl = externalFileUrl.trim()

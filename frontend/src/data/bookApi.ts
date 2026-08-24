@@ -8,7 +8,7 @@ export type Book = {
     category: string | null;
 };
 
-const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080"\;
+const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8080";
 
 async function request<T>(path: string, initData: string, options?: RequestInit): Promise<T> {
     let response: Response;
