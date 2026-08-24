@@ -16,12 +16,17 @@ class Book(
 
     var title: String = "",
     var author: String = "",
+
     var coverUrl: String? = null,
+
     var fileUrl: String? = null,
+
+    var storedFileName: String? = null,
 
     @Column(columnDefinition = "TEXT")
     var description: String? = null,
 
     var category: String? = null,
+
     var createdAt: Instant = Instant.now(),
 )
