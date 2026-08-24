@@ -4,6 +4,7 @@ import ProfileForm from "./components/ProfileForm";
 import StudyCalendar from "./components/StudyCalendar";
 import GroupsPage from "./components/GroupsPage";
 import JournalPage from "./components/JournalPage";
+import LibraryPage from "./components/LibraryPage";
 import SettingsPage from "./components/SettingsPage";
 import WeeklyTimetable from "./components/WeeklyTimetable";
 import LiveClock from "./components/LiveClock";
@@ -11,7 +12,6 @@ import Toast from "./components/Toast";
 import { getMyProfile, joinViaInvite, type StudentProfile } from "./data/profileApi";
 import { haptics } from "./data/haptics";
 
-// Modular CSS imports replacing dashboard.css
 import "./styles/global.css";
 import "./styles/sidebar.css";
 import "./styles/profile-form.css";
@@ -20,6 +20,7 @@ import "./styles/groups.css";
 import "./styles/timetable.css";
 import "./styles/schedule-editor.css";
 import "./styles/journal.css";
+import "./styles/library.css";
 import "./styles/settings.css";
 
 interface TelegramWebApp {
@@ -52,12 +53,10 @@ declare global {
     interface Window { Telegram?: { WebApp?: TelegramWebApp } }
 }
 
-type View = "dashboard" | "groups" | "journal" | "settings";
+type View = "dashboard" | "groups" | "journal" | "library" | "settings";
 type ThemePreference = "system" | "light" | "dark";
 
 const THEME_STORAGE_KEY = "minglestudy-theme-preference";
-// A start_param we've already processed this session, so re-renders / StrictMode's double-invoke
-// don't fire the join request twice.
 const INVITE_PARAM_PATTERN = /^uni_(\d+)$/;
 
 function getStoredThemePreference(): ThemePreference {
@@ -119,8 +118,6 @@ function App() {
         getMyProfile(initData).then(setProfile).catch(() => setProfile(null)).finally(() => setLoading(false));
     }, [initData, telegram]);
 
-    // Deep-link auto-join: t.me/<bot>?startapp=uni_<id> lands here as start_param.
-    // Runs once profile has loaded, so we know whether the recipient already has a university.
     useEffect(() => {
         if (!initData || loading || inviteHandled) return;
 
@@ -140,7 +137,6 @@ function App() {
                 } else if (result.reason === "already_in_other_university") {
                     setInviteToast("You're already part of a different university group.");
                 }
-                // "already_in_this_university": nothing to announce, they're already there.
             })
             .catch(() => {
                 haptics.error();
@@ -149,9 +145,6 @@ function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [initData, loading, inviteHandled, startParam]);
 
-    // Apply the effective theme to the document. Manual Light/Dark picks in Settings
-    // win outright; "System" mirrors Telegram's live colorScheme and stays subscribed
-    // to theme-change events so it keeps following if the user flips Telegram's theme.
     useEffect(() => {
         const applyTheme = () => {
             const effective = themePreference === "system" ? (telegram?.colorScheme ?? "light") : themePreference;
@@ -184,6 +177,11 @@ function App() {
         setView("journal");
     };
 
+    const goToLibrary = () => {
+        setEditingProfile(false);
+        setView("library");
+    };
+
     const goToSettings = () => {
         setEditingProfile(false);
         setView("settings");
@@ -198,6 +196,7 @@ function App() {
             onDashboardClick={goToDashboard}
             onGroupsClick={goToGroups}
             onJournalClick={goToJournal}
+            onLibraryClick={goToLibrary}
             onSettingsClick={goToSettings}
         />
     );
@@ -250,6 +249,9 @@ function App() {
                     )}
                     {view === "journal" && (
                         <JournalPage initData={initData} />
+                    )}
+                    {view === "library" && (
+                        <LibraryPage initData={initData} />
                     )}
                     {view === "settings" && (
                         <SettingsPage

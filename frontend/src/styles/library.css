@@ -1,0 +1,121 @@
+.library-section {
+    margin-bottom: 36px;
+}
+
+.library-row {
+    width: 100%;
+    cursor: pointer;
+}
+
+.library-cover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 50px;
+    flex-shrink: 0;
+    border-radius: 5px;
+    overflow: hidden;
+    background: var(--card-alt);
+    color: var(--ink-soft);
+    border: 1px solid var(--line);
+}
+
+.library-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.library-cover-skeleton {
+    width: 38px;
+    height: 50px;
+    flex-shrink: 0;
+    border-radius: 5px;
+}
+
+.library-category-pill {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, var(--card-alt));
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.library-sheet {
+    max-height: 88vh;
+}
+
+.library-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.library-detail-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.library-cover-large {
+    width: 64px;
+    height: 84px;
+    border-radius: 8px;
+}
+
+.library-cover-large svg {
+    width: 28px;
+    height: 28px;
+}
+
+.library-detail-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+.library-detail-title {
+    color: var(--ink);
+    font-size: 17px;
+    font-weight: 700;
+    line-height: 1.25;
+}
+
+.library-description {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13.5px;
+    line-height: 1.5;
+}
+
+.library-reader {
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--line);
+    background: var(--card-alt);
+    height: min(60vh, 520px);
+}
+
+.library-reader-frame {
+    width: 100%;
+    height: 100%;
+    border: none;
+}
+
+.library-reader-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 28px 16px;
+    border-radius: 12px;
+    border: 1px dashed var(--line);
+    background: var(--card-alt);
+    text-align: center;
+}

@@ -8,10 +8,11 @@ type SidebarProps = {
     onDashboardClick: () => void;
     onGroupsClick: () => void;
     onJournalClick: () => void;
+    onLibraryClick: () => void;
     onSettingsClick: () => void;
 };
 
-type NavKey = "dashboard" | "calendar" | "journal" | "groups" | "settings";
+type NavKey = "dashboard" | "calendar" | "journal" | "groups" | "library" | "settings";
 
 export default function Sidebar({
                                     firstName,
@@ -21,12 +22,9 @@ export default function Sidebar({
                                     onDashboardClick,
                                     onGroupsClick,
                                     onJournalClick,
+                                    onLibraryClick,
                                     onSettingsClick,
                                 }: SidebarProps) {
-    // Tracks which row shows the active highlight in the desktop list.
-    // The app doesn't have separate routes for Dashboard vs. Calendar (Calendar
-    // just scrolls within the dashboard view), so this is tracked locally here
-    // rather than threaded through App.tsx — clicking a row highlights it directly.
     const [active, setActive] = useState<NavKey>("dashboard");
 
     const handleDashboardClick = () => {
@@ -52,13 +50,16 @@ export default function Sidebar({
         onGroupsClick();
     };
 
+    const handleLibraryClick = () => {
+        setActive("library");
+        onLibraryClick();
+    };
+
     const handleSettingsClick = () => {
         setActive("settings");
         onSettingsClick();
     };
 
-    // Avatar row is a shortcut straight into the Profile editor (which now lives
-    // inside Settings), so it also highlights the Settings nav item on the way in.
     const handleAccountClick = () => {
         setActive("settings");
         onProfileClick();
@@ -66,7 +67,6 @@ export default function Sidebar({
 
     return (
         <aside className="sidebar">
-            {/* Desktop: macOS-style flat list. Hidden on mobile via sidebar.css. */}
             <div className="sidebar-brand">
                 <span className="sidebar-brand-name">MingleStudy</span>
             </div>
@@ -135,6 +135,18 @@ export default function Sidebar({
                 </button>
 
                 <button
+                    className={`nav-row ${active === "library" ? "is-active" : ""}`}
+                    onClick={handleLibraryClick}
+                >
+                    <span className="nav-row-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        </svg>
+                    </span>
+                    <span className="nav-row-label">Library</span>
+                </button>
+
+                <button
                     className={`nav-row ${active === "settings" ? "is-active" : ""}`}
                     onClick={handleSettingsClick}
                 >
@@ -148,7 +160,6 @@ export default function Sidebar({
                 </button>
             </nav>
 
-            {/* Mobile: unchanged iOS-style bottom tab bar. Hidden on desktop via sidebar.css. */}
             <nav className="sidebar-tabbar">
                 <button className="tab-item" onClick={handleDashboardClick}>
                     <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -176,6 +187,13 @@ export default function Sidebar({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m5-4.13a4 4 0 100-8 4 4 0 000 8zm6 4a4 4 0 10-8 0m8 0v0a4 4 0 01-4 4H9a4 4 0 01-4-4v0" />
                     </svg>
                     <span>Groups</span>
+                </button>
+
+                <button className="tab-item" onClick={handleLibraryClick}>
+                    <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                    <span>Library</span>
                 </button>
 
                 <button className="tab-item" onClick={handleSettingsClick}>
