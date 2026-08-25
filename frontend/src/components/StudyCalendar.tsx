@@ -1,19 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Toast from "./Toast";
+import { getMyEvents, createEvent, deleteEvent, type StudyEvent } from "../data/eventsApi";
 
-interface StudyEvent {
-    id: string;
-    title: string;
-    time: string;
-}
+type StudyCalendarProps = {
+    initData: string;
+};
 
 type EventsMap = Record<string, StudyEvent[]>;
 
-const STORAGE_KEY = "minglestudy_calendar_events";
 const WEEKDAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-// No demo/placeholder events — the calendar starts empty for every student.
-const DEFAULT_EVENTS: EventsMap = {};
 
 const formatDateKey = (year: number, month: number, day: number) => {
     const m = String(month + 1).padStart(2, "0");
@@ -21,7 +16,27 @@ const formatDateKey = (year: number, month: number, day: number) => {
     return `${year}-${m}-${d}`;
 };
 
-export default function StudyCalendar() {
+// Group flat events (each with a UTC ISO startTime) into a map keyed by the
+// event's *local* calendar day, so a session at 11pm shows on the right tile
+// regardless of what UTC date it crosses into.
+function groupByLocalDay(events: StudyEvent[]): EventsMap {
+    const map: EventsMap = {};
+    for (const event of events) {
+        const d = new Date(event.startTime);
+        const key = formatDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+        (map[key] ??= []).push(event);
+    }
+    for (const key of Object.keys(map)) {
+        map[key].sort((a, b) => a.startTime.localeCompare(b.startTime));
+    }
+    return map;
+}
+
+function formatEventTime(iso: string): string {
+    return new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+export default function StudyCalendar({ initData }: StudyCalendarProps) {
     const today = new Date();
     const todayKey = formatDateKey(today.getFullYear(), today.getMonth(), today.getDate());
 
@@ -32,30 +47,29 @@ export default function StudyCalendar() {
     const [eventTitle, setEventTitle] = useState("");
     const [eventTime, setEventTime] = useState("16:00");
 
-    // Status feedback for the notification sync (visible in UI since Telegram WebView has no dev console)
+    const [events, setEvents] = useState<StudyEvent[]>([]);
+    const [loading, setLoading] = useState(Boolean(initData));
+    const [loadError, setLoadError] = useState<string | null>(null);
+
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-    // Persistent storage initialization from LocalStorage
-    const [events, setEvents] = useState<EventsMap>(() => {
-        try {
-            const saved = localStorage.getItem(STORAGE_KEY);
-            return saved ? JSON.parse(saved) : DEFAULT_EVENTS;
-        } catch {
-            return DEFAULT_EVENTS;
-        }
-    });
+    const refresh = useCallback(() => {
+        if (!initData) { setLoading(false); return; }
+        setLoading(true);
+        setLoadError(null);
+        getMyEvents(initData)
+            .then(setEvents)
+            .catch((e) => setLoadError((e as Error).message))
+            .finally(() => setLoading(false));
+    }, [initData]);
 
-    // Automatically save to LocalStorage whenever events state changes
     useEffect(() => {
-        try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
-        } catch (err) {
-            console.error("Failed to save calendar events to localStorage", err);
-        }
-    }, [events]);
+        refresh();
+    }, [refresh]);
+
+    const eventsByDay = groupByLocalDay(events);
 
     const year = viewDate.getFullYear();
     const month = viewDate.getMonth();
@@ -79,106 +93,42 @@ export default function StudyCalendar() {
 
     const handleAddEventSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!eventTitle.trim()) return;
+        if (!eventTitle.trim() || !initData) return;
 
         setSubmitError(null);
-        setSubmitSuccess(null);
 
         const timeString = eventTime || "12:00";
-
-        // 1. Save locally in React state
-        const newEvt: StudyEvent = {
-            id: Date.now().toString(),
-            title: eventTitle.trim(),
-            time: timeString,
-        };
-
-        setEvents((prev) => ({
-            ...prev,
-            [selectedKey]: [...(prev[selectedKey] ?? []), newEvt],
-        }));
-
-        // Local save always succeeds — confirm immediately with a toast.
-        setToastMessage("Session added ✓");
-
-        // 2. Schedule Telegram notification via Spring Boot API
-        // Read directly from window.Telegram.WebApp rather than the @twa-dev/sdk
-        // import — the SDK's WebApp object was returning empty/stale initDataUnsafe,
-        // while window.Telegram.WebApp always has the live, correct data.
-        const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-
-        if (!telegramId) {
-            setSubmitError(
-                "No Telegram user ID was found, so the reminder was NOT scheduled on the server. (The event is saved locally only.) This usually means the app wasn't opened inside a real Telegram chat."
-            );
-            setEventTitle("");
-            setIsAdding(false);
-            return;
-        }
-
-        // Build the date/time using the device's local timezone, then convert to UTC for the server
         const [sYear, sMonth, sDay] = selectedKey.split("-").map(Number);
         const [hours, minutes] = timeString.split(":").map(Number);
         const startDateTime = new Date(sYear, sMonth - 1, sDay, hours, minutes);
-        const startTimeUtc = startDateTime.toISOString();
 
         setIsSubmitting(true);
-
         try {
-            const res = await fetch("https://minglestudy-backend-production.up.railway.app/api/events", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    telegramId: telegramId,
-                    title: eventTitle.trim(),
-                    startTime: startTimeUtc,
-                }),
-            });
-
-            if (!res.ok) {
-                let bodyText = "";
-                try {
-                    bodyText = await res.text();
-                } catch {
-                    bodyText = "(could not read response body)";
-                }
-                setSubmitError(`Server rejected the event — status ${res.status}. ${bodyText}`);
-            } else {
-                setSubmitSuccess(`Reminder scheduled for ${startDateTime.toLocaleString()}.`);
-            }
+            const saved = await createEvent(initData, eventTitle.trim(), startDateTime.toISOString());
+            setEvents((prev) => [...prev, saved]);
+            setToastMessage("Session added ✓");
+            setEventTitle("");
+            setIsAdding(false);
         } catch (err) {
-            setSubmitError(
-                `Network error while contacting the server: ${
-                    err instanceof Error ? err.message : String(err)
-                }`
-            );
+            setSubmitError((err as Error).message);
         } finally {
             setIsSubmitting(false);
         }
-
-        setEventTitle("");
-        setIsAdding(false);
     };
 
-    const handleDeleteEvent = (eventId: string) => {
-        setEvents((prev) => {
-            const currentList = prev[selectedKey] ?? [];
-            const updatedList = currentList.filter((evt) => evt.id !== eventId);
-            const updatedEvents = { ...prev };
-
-            if (updatedList.length === 0) {
-                delete updatedEvents[selectedKey];
-            } else {
-                updatedEvents[selectedKey] = updatedList;
-            }
-
-            return updatedEvents;
-        });
+    const handleDeleteEvent = async (eventId: number) => {
+        if (!initData) return;
+        const previous = events;
+        setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
+        try {
+            await deleteEvent(initData, eventId);
+        } catch (err) {
+            setEvents(previous); // roll back on failure
+            setSubmitError((err as Error).message);
+        }
     };
 
-    const activeEvents = events[selectedKey] ?? [];
+    const activeEvents = eventsByDay[selectedKey] ?? [];
 
     const [sYear, sMonth, sDay] = selectedKey.split("-").map(Number);
     const selectedDateObj = new Date(sYear, sMonth - 1, sDay);
@@ -186,6 +136,17 @@ export default function StudyCalendar() {
         month: "long",
         day: "numeric",
     });
+
+    if (!initData) {
+        return (
+            <section className="calendar-section">
+                <div className="section-heading">
+                    <h2>Study Schedule</h2>
+                </div>
+                <p className="preview-banner">Open MingleStudy in Telegram to see your study schedule.</p>
+            </section>
+        );
+    }
 
     return (
         <section className="calendar-section">
@@ -221,6 +182,12 @@ export default function StudyCalendar() {
                     </div>
                 </div>
 
+                {loadError && (
+                    <p className="form-error" style={{ margin: "0 0 12px" }}>
+                        Couldn't load your schedule: {loadError}
+                    </p>
+                )}
+
                 {/* Grid */}
                 <div className="calendar-grid">
                     {WEEKDAYS.map((day) => (
@@ -239,7 +206,7 @@ export default function StudyCalendar() {
 
                         const isToday = currentTileKey === todayKey;
                         const isSelected = currentTileKey === selectedKey;
-                        const hasEvents = (events[currentTileKey] ?? []).length > 0;
+                        const hasEvents = (eventsByDay[currentTileKey] ?? []).length > 0;
 
                         return (
                             <button
@@ -253,7 +220,6 @@ export default function StudyCalendar() {
                                     setSelectedKey(currentTileKey);
                                     setIsAdding(false);
                                     setSubmitError(null);
-                                    setSubmitSuccess(null);
                                 }}
                             >
                                 {dayNum}
@@ -274,7 +240,6 @@ export default function StudyCalendar() {
                                 onClick={() => {
                                     setIsAdding(true);
                                     setSubmitError(null);
-                                    setSubmitSuccess(null);
                                 }}
                             >
                                 + Add Session
@@ -282,20 +247,9 @@ export default function StudyCalendar() {
                         )}
                     </div>
 
-                    {/* Status messages */}
-                    {isSubmitting && (
-                        <p style={{ color: "#888", fontSize: "13px", marginBottom: "8px" }}>
-                            Scheduling reminder…
-                        </p>
-                    )}
                     {submitError && (
                         <p style={{ color: "#e53935", fontSize: "13px", marginBottom: "8px", wordBreak: "break-word" }}>
                             ⚠️ {submitError}
-                        </p>
-                    )}
-                    {submitSuccess && (
-                        <p style={{ color: "#2e7d32", fontSize: "13px", marginBottom: "8px" }}>
-                            ✅ {submitSuccess}
                         </p>
                     )}
 
@@ -325,20 +279,22 @@ export default function StudyCalendar() {
                                     Cancel
                                 </button>
                                 <button type="submit" className="btn-primary bubble-button" disabled={isSubmitting}>
-                                    Save
+                                    {isSubmitting ? "Saving…" : "Save"}
                                 </button>
                             </div>
                         </form>
                     )}
 
                     {/* Events List */}
-                    {activeEvents.length > 0 ? (
+                    {loading ? (
+                        <p className="subtitle" style={{ fontSize: "13px" }}>Loading…</p>
+                    ) : activeEvents.length > 0 ? (
                         <div className="ios-group">
                             {activeEvents.map((evt) => (
                                 <div key={evt.id} className="ios-row event-chip">
                                     <div className="event-info">
                                         <span>{evt.title}</span>
-                                        <span className="event-time">{evt.time}</span>
+                                        <span className="event-time">{formatEventTime(evt.startTime)}</span>
                                     </div>
                                     <button
                                         type="button"

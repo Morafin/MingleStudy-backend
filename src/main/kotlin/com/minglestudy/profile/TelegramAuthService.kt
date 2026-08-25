@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service
 import org.springframework.web.server.ResponseStatusException
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
+import java.time.Duration
 import java.time.Instant
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -25,6 +26,11 @@ class TelegramAuthService(
     private val jsonMapper: JsonMapper,
     private val profiles: StudentProfileRepository,
 ) {
+    // initData is a signed but replayable string — without this check, anyone who ever
+    // captured a valid initData value (e.g. via a proxy, log, or shared link) could keep
+    // using it indefinitely. Telegram documents auth_date for exactly this purpose.
+    private val maxInitDataAge = Duration.ofHours(24)
+
     fun verify(initData: String?): TelegramUser {
         if (initData.isNullOrBlank() || botToken.isBlank()) unauthorized()
 
@@ -40,6 +46,10 @@ class TelegramAuthService(
         val secretKey = hmac("WebAppData".toByteArray(), botToken.toByteArray())
         val calculatedHash = hmac(secretKey, dataCheckString.toByteArray()).joinToString("") { "%02x".format(it) }
         if (!constantTimeEquals(suppliedHash, calculatedHash)) unauthorized()
+
+        val authDateSeconds = values["auth_date"]?.toLongOrNull() ?: unauthorized()
+        val age = Duration.between(Instant.ofEpochSecond(authDateSeconds), Instant.now())
+        if (age.isNegative || age > maxInitDataAge) unauthorized()
 
         val userJson = values["user"] ?: unauthorized()
         val user = jsonMapper.readTree(userJson)

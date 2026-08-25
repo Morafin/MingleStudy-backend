@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 type PdfReaderProps = {
     fileUrl: string;
     title: string;
+    initData: string;
 };
 
 const READY_CHECK_INTERVAL_MS = 400;
@@ -23,7 +24,7 @@ function isViewerReady(iframe: HTMLIFrameElement | null): boolean {
     }
 }
 
-export default function PdfReader({ fileUrl, title }: PdfReaderProps) {
+export default function PdfReader({ fileUrl, title, initData }: PdfReaderProps) {
     const [blobUrl, setBlobUrl] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [ready, setReady] = useState(false);
@@ -42,7 +43,7 @@ export default function PdfReader({ fileUrl, title }: PdfReaderProps) {
         attemptRef.current = 0;
         setIframeKey(0);
 
-        fetch(fileUrl)
+        fetch(fileUrl, { headers: { "X-Telegram-Init-Data": initData } })
             .then((res) => {
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
                 return res.blob();
@@ -60,7 +61,7 @@ export default function PdfReader({ fileUrl, title }: PdfReaderProps) {
             cancelled = true;
             if (objectUrl) URL.revokeObjectURL(objectUrl);
         };
-    }, [fileUrl]);
+    }, [fileUrl, initData]);
 
     // Poll the (same-origin) viewer for readiness. If it hasn't finished loading
     // within READY_TIMEOUT_MS, force a fresh reload by remounting the iframe —

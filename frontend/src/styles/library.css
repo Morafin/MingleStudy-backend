@@ -34,6 +34,49 @@
     border-radius: 5px;
 }
 
+.library-cover-placeholder {
+    border: none;
+}
+
+.library-cover-initial {
+    color: #fff;
+    font-family: "Raleway", sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 1;
+}
+
+.library-cover-large .library-cover-initial {
+    font-size: 26px;
+}
+
+.library-search-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: var(--card-alt);
+    border: 1px solid var(--line);
+    color: var(--ink-soft);
+}
+
+.library-search-input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--ink);
+    font-size: 14px;
+    font-family: inherit;
+}
+
+.library-search-input::placeholder {
+    color: var(--ink-soft);
+}
+
 .library-category-pill {
     display: inline-flex;
     align-items: center;
@@ -49,6 +92,34 @@
 
 .library-sheet {
     max-height: 88vh;
+}
+
+.library-sheet .ios-sheet-nav-title {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.library-sheet .ios-sheet-nav-btn {
+    flex-shrink: 0;
+    transition: opacity 0.15s ease, transform 0.1s ease;
+}
+
+.library-sheet button.ios-sheet-nav-btn:active {
+    opacity: 0.6;
+    transform: scale(0.96);
+}
+
+.ios-sheet-grabber {
+    width: 36px;
+    height: 5px;
+    margin: 8px auto 0;
+    border-radius: 999px;
+    background: var(--line);
+    opacity: 0.7;
 }
 
 .library-sheet-body {

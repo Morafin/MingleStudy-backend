@@ -239,7 +239,7 @@ function App() {
                         <>
                             <LiveClock />
                             <div className="dashboard-grid">
-                                <StudyCalendar />
+                                <StudyCalendar initData={initData} />
                                 <WeeklyTimetable initData={initData} universityName={activeProfile.university?.name} />
                             </div>
                         </>

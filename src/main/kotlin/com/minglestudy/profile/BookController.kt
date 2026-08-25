@@ -102,7 +102,11 @@ class BookController(
     }
 
     @GetMapping("/{id}/file")
-    fun getBookFile(@PathVariable id: Long): ResponseEntity<FileSystemResource> {
+    fun getBookFile(
+        @RequestHeader("X-Telegram-Init-Data") initData: String,
+        @PathVariable id: Long,
+    ): ResponseEntity<FileSystemResource> {
+        telegramAuth.verify(initData)
         val book = books.findById(id).orElseThrow {
             ResponseStatusException(HttpStatus.NOT_FOUND, "Book not found")
         }
