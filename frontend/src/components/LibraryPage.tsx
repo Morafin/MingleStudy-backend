@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getBooks, type Book } from "../data/bookApi";
 import { haptics } from "../data/haptics";
+import PdfReader from "./PdfReader";
 
 type LibraryPageProps = {
     initData: string;
@@ -39,6 +40,14 @@ function IconChevronRight() {
     );
 }
 
+function IconChevronDown() {
+    return (
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+        </svg>
+    );
+}
+
 function groupByCategory(list: Book[]): { label: string; items: Book[] }[] {
     const groups = new Map<string, Book[]>();
     for (const book of list) {
@@ -61,6 +70,7 @@ export default function LibraryPage({ initData }: LibraryPageProps) {
     const [loading, setLoading] = useState(Boolean(initData));
     const [error, setError] = useState<string | null>(null);
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+    const [isReaderOpen, setIsReaderOpen] = useState(false);
 
     useEffect(() => {
         if (!initData) { setLoading(false); return; }
@@ -72,6 +82,24 @@ export default function LibraryPage({ initData }: LibraryPageProps) {
             .finally(() => setLoading(false));
     }, [initData]);
 
+    // Wire the Telegram hardware/back-gesture button to close the full-screen reader.
+    // Cast to `any` here: the project's TelegramWebApp type doesn't declare BackButton,
+    // but it exists on the real runtime object (window.Telegram.WebApp.BackButton).
+    useEffect(() => {
+        const webApp = window.Telegram?.WebApp as any;
+        if (!webApp?.BackButton) return;
+
+        if (isReaderOpen) {
+            const handleBack = () => setIsReaderOpen(false);
+            webApp.BackButton.show();
+            webApp.BackButton.onClick(handleBack);
+            return () => {
+                webApp.BackButton.offClick(handleBack);
+                webApp.BackButton.hide();
+            };
+        }
+    }, [isReaderOpen]);
+
     function openBook(book: Book) {
         haptics.tap("light");
         setSelectedBook(book);
@@ -79,6 +107,15 @@ export default function LibraryPage({ initData }: LibraryPageProps) {
 
     function closeBook() {
         setSelectedBook(null);
+    }
+
+    function openReader() {
+        haptics.tap("light");
+        setIsReaderOpen(true);
+    }
+
+    function closeReader() {
+        setIsReaderOpen(false);
     }
 
     if (!initData) {
@@ -175,19 +212,38 @@ export default function LibraryPage({ initData }: LibraryPageProps) {
                             )}
 
                             {selectedBook.fileUrl ? (
-                                <div className="library-reader">
-                                    <iframe
-                                        src={selectedBook.fileUrl}
-                                        title={selectedBook.title}
-                                        className="library-reader-frame"
-                                    />
-                                </div>
+                                <button type="button" className="library-read-btn" onClick={openReader}>
+                                    <IconBook />
+                                    Read Book
+                                </button>
                             ) : (
                                 <div className="library-reader-empty">
                                     <p className="subtitle">The full text isn't available yet — check back soon.</p>
                                 </div>
                             )}
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {selectedBook && selectedBook.fileUrl && (
+                <div className={`library-reader-fullscreen ${isReaderOpen ? "is-open" : ""}`}>
+                    <div className="library-reader-navbar">
+                        <button className="library-reader-close" onClick={closeReader} aria-label="Close reader">
+                            <IconChevronDown />
+                        </button>
+                        <div className="library-reader-navtext">
+                            <span className="library-reader-title">{selectedBook.title}</span>
+                            <span className="library-reader-subtitle">{selectedBook.author}</span>
+                        </div>
+                        <span className="library-reader-close" style={{ visibility: "hidden" }}>
+                            <IconChevronDown />
+                        </span>
+                    </div>
+                    <div className="library-reader-content">
+                        {isReaderOpen && (
+                            <PdfReader fileUrl={selectedBook.fileUrl} title={selectedBook.title} />
+                        )}
                     </div>
                 </div>
             )}
