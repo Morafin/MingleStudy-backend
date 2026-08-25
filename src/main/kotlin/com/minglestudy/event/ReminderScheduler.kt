@@ -1,5 +1,6 @@
 package com.minglestudy.event
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -14,6 +15,11 @@ class ReminderScheduler(
     private val restTemplate = RestTemplate()
 
     @Scheduled(fixedRate = 30000)
+    @SchedulerLock(
+        name = "ReminderScheduler_checkAndSendReminders",
+        lockAtLeastFor = "25s",
+        lockAtMostFor = "4m"
+    )
     fun checkAndSendReminders() {
         val now = Instant.now()
         val dueEvents = eventRepository.findAllByStartTimeBeforeAndNotifiedFalse(now)

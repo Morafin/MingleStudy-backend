@@ -26,6 +26,15 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	runtimeOnly("org.postgresql:postgresql")
+
+	// Distributed scheduler locking (cluster-safe @Scheduled tasks)
+	implementation("net.javacrumbs.shedlock:shedlock-spring:7.9.0")
+	implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.9.0")
+
+	// Versioned schema migrations
+	implementation("org.springframework.boot:spring-boot-starter-flyway")
+	implementation("org.flywaydb:flyway-database-postgresql")
+
 	testImplementation("org.springframework.boot:spring-boot-starter-data-jpa-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-validation-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
