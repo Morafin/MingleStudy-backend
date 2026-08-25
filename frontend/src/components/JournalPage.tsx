@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type MouseEvent, type TouchEvent } from "react";
 import Toast from "./Toast";
+import type { JournalEntry } from "../data/journalApi";
 import {
-    createJournalEntry,
-    deleteJournalEntry,
-    getMyJournalEntries,
-    togglePinJournalEntry,
-    updateJournalEntry,
-    type JournalEntry,
-} from "../data/journalApi";
+    useCreateJournalEntry,
+    useDeleteJournalEntry,
+    useJournalEntries,
+    useTogglePinJournalEntry,
+    useUpdateJournalEntry,
+} from "../data/useJournalQueries";
 import { haptics } from "../data/haptics";
 
 type JournalPageProps = { initData: string };
@@ -124,8 +124,14 @@ function IconStar({ filled }: { filled: boolean }) {
 }
 
 export default function JournalPage({ initData }: JournalPageProps) {
-    const [entries, setEntries] = useState<JournalEntry[]>([]);
-    const [loading, setLoading] = useState(Boolean(initData));
+    const { data: rawEntries, isLoading: loading, error: fetchError } = useJournalEntries(initData);
+    const entries = useMemo(() => sortEntries(rawEntries ?? []), [rawEntries]);
+
+    const createMutation = useCreateJournalEntry(initData);
+    const updateMutation = useUpdateJournalEntry(initData);
+    const pinMutation = useTogglePinJournalEntry(initData);
+    const deleteMutation = useDeleteJournalEntry(initData);
+
     const [error, setError] = useState<string | null>(null);
     const [selectedId, setSelectedId] = useState<number | null>(null);
     const [content, setContent] = useState("");
@@ -145,20 +151,16 @@ export default function JournalPage({ initData }: JournalPageProps) {
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
-        if (!initData) { setLoading(false); return; }
-        setLoading(true);
-        getMyJournalEntries(initData)
-            .then((all) => {
-                const sorted = sortEntries(all);
-                setEntries(sorted);
-                if (sorted.length > 0) {
-                    setSelectedId(sorted[0].id);
-                    setContent(sorted[0].content);
-                }
-            })
-            .catch((e) => setError((e as Error).message))
-            .finally(() => setLoading(false));
-    }, [initData]);
+        if (fetchError) setError((fetchError as Error).message);
+    }, [fetchError]);
+
+    // Select the first note once entries have loaded, if nothing's selected yet.
+    useEffect(() => {
+        if (!initData || loading || selectedId != null || entries.length === 0) return;
+        setSelectedId(entries[0].id);
+        setContent(entries[0].content);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [initData, loading, entries.length]);
 
     // Autosave the open note.
     useEffect(() => {
@@ -169,11 +171,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
         setSaveState("saving");
         const timer = setTimeout(async () => {
             try {
-                const updated = await updateJournalEntry(initData, selectedId, content);
-                setEntries((prev) => {
-                    const rest = prev.filter((e) => e.id !== updated.id);
-                    return sortEntries([updated, ...rest]);
-                });
+                await updateMutation.mutateAsync({ id: selectedId, content });
                 setSaveState("saved");
                 haptics.success();
             } catch (e) {
@@ -203,8 +201,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
         const entry = entries.find((e) => e.id === id);
         if (entry && !entry.content.trim()) {
             try {
-                await deleteJournalEntry(initData, id);
-                setEntries((prev) => prev.filter((e) => e.id !== id));
+                await deleteMutation.mutateAsync(id);
             } catch {
                 // best-effort cleanup; ignore failures here
             }
@@ -225,8 +222,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
         setError(null);
         await discardIfEmpty(selectedId);
         try {
-            const created = await createJournalEntry(initData);
-            setEntries((prev) => sortEntries([created, ...prev]));
+            const created = await createMutation.mutateAsync(undefined);
             setSelectedId(created.id);
             setContent("");
             setSaveState("idle");
@@ -246,9 +242,8 @@ export default function JournalPage({ initData }: JournalPageProps) {
     async function handleDeleteNote(id: number) {
         if (!window.confirm("Delete this note?")) return;
         try {
-            await deleteJournalEntry(initData, id);
+            await deleteMutation.mutateAsync(id);
             const remaining = entries.filter((e) => e.id !== id);
-            setEntries(remaining);
             if (id === selectedId) {
                 const next = remaining.length > 0 ? remaining[0].id : null;
                 setSelectedId(next);
@@ -269,11 +264,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
         e?.stopPropagation();
         haptics.tap("light");
         try {
-            const updated = await togglePinJournalEntry(initData, id);
-            setEntries((prev) => {
-                const rest = prev.filter((x) => x.id !== updated.id);
-                return sortEntries([...rest, updated]);
-            });
+            await pinMutation.mutateAsync(id);
         } catch (e) {
             setError((e as Error).message);
             haptics.error();
