@@ -59,5 +59,24 @@ export const createScheduleEntriesBulk = (initData: string, entries: ScheduleEnt
 export const updateScheduleEntry = (initData: string, id: number, entry: ScheduleEntryInput) =>
     request<ScheduleEntry>(`/api/schedule/${id}`, initData, { method: "PUT", body: JSON.stringify(entry) });
 
-export const deleteScheduleEntry = (initData: string, id: number) =>
-    request<void>(`/api/schedule/${id}`, initData, { method: "DELETE" });
+// A delete can legitimately race: the optimistic UI removes the row locally, then a
+// retry, a double-tap, or a stale cached list can hit the server after the row is
+// already gone. Treat 404 as a no-op success rather than an error — same fix already
+// applied to journal deletes.
+export async function deleteScheduleEntry(initData: string, id: number): Promise<void> {
+    let response: Response;
+    try {
+        response = await fetch(`${apiUrl}/api/schedule/${id}`, {
+            method: "DELETE",
+            headers: authHeaders(initData),
+        });
+    } catch (networkError) {
+        throw new Error(`Network error calling ${apiUrl}/api/schedule/${id}: ${(networkError as Error).message}`);
+    }
+    if (response.status === 404) return; // already gone — treat as success
+    if (!response.ok) {
+        let bodyText = "";
+        try { bodyText = await response.text(); } catch { /* ignore */ }
+        throw new Error(`${response.status} ${response.statusText} on /api/schedule/${id}${bodyText ? ` — ${bodyText}` : ""}`);
+    }
+}

@@ -40,5 +40,24 @@ export const createEvent = (initData: string, title: string, startTime: string) 
         body: JSON.stringify({ title, startTime }),
     });
 
-export const deleteEvent = (initData: string, id: number) =>
-    request<void>(`/api/events/${id}`, initData, { method: "DELETE" });
+// A delete can legitimately race: the optimistic UI removes the row locally, then a
+// retry, a double-tap, or a stale cached list can hit the server after the row is
+// already gone. Treat 404 as a no-op success rather than an error — same fix already
+// applied to journal deletes.
+export async function deleteEvent(initData: string, id: number): Promise<void> {
+    let response: Response;
+    try {
+        response = await fetch(`${apiUrl}/api/events/${id}`, {
+            method: "DELETE",
+            headers: { "X-Telegram-Init-Data": initData },
+        });
+    } catch (networkError) {
+        throw new Error(`Network error calling ${apiUrl}/api/events/${id}: ${(networkError as Error).message}`);
+    }
+    if (response.status === 404) return; // already gone — treat as success
+    if (!response.ok) {
+        let bodyText = "";
+        try { bodyText = await response.text(); } catch { /* ignore */ }
+        throw new Error(`${response.status} ${response.statusText} on /api/events/${id}${bodyText ? ` — ${bodyText}` : ""}`);
+    }
+}
