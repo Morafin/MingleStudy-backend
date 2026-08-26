@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
-import { getActivityStatus, getMyGroup, type MyGroup } from "../data/profileApi";
+import { useState } from "react";
+import { getActivityStatus } from "../data/profileApi";
+import { useMyGroup } from "../data/useProfileQueries";
 import { haptics } from "../data/haptics";
 
 type GroupsPageProps = {
@@ -36,23 +37,9 @@ function IconShare() {
 }
 
 export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps) {
-    const [group, setGroup] = useState<MyGroup | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const { data: group, isLoading: loading, error: fetchError } = useMyGroup(initData);
+    const error = fetchError ? (fetchError instanceof Error ? fetchError.message : String(fetchError)) : null;
     const [copied, setCopied] = useState(false);
-
-    useEffect(() => {
-        if (!initData) {
-            setLoading(false);
-            return;
-        }
-        setLoading(true);
-        setError(null);
-        getMyGroup(initData)
-            .then(setGroup)
-            .catch((err) => setError(err instanceof Error ? err.message : String(err)))
-            .finally(() => setLoading(false));
-    }, [initData]);
 
     async function handleInvite(universityId: number) {
         const link = `https://t.me/${BOT_USERNAME}?startapp=uni_${universityId}`;
@@ -203,7 +190,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                                         )}
                                     </div>
                                     {member.username && (
-                                        <a
+                                    <a
                                             className="group-member-message-btn"
                                             href={`https://t.me/${member.username}`}
                                             target="_blank"
