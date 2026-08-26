@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { getBooks, type Book } from "../data/bookApi";
+import { type Book } from "../data/bookApi";
+import { useBooks } from "../data/useBookQueries";
 import { haptics } from "../data/haptics";
 import PdfReader from "./PdfReader";
 
@@ -111,22 +112,13 @@ function groupByCategory(list: Book[]): { label: string; items: Book[] }[] {
 }
 
 export default function LibraryPage({ initData }: LibraryPageProps) {
-    const [books, setBooks] = useState<Book[]>([]);
-    const [loading, setLoading] = useState(Boolean(initData));
-    const [error, setError] = useState<string | null>(null);
+    const { data: rawBooks, isLoading: loading, error: fetchError } = useBooks(initData);
+    const books = rawBooks ?? [];
+    const error = fetchError ? (fetchError as Error).message : null;
+
     const [selectedBook, setSelectedBook] = useState<Book | null>(null);
     const [isReaderOpen, setIsReaderOpen] = useState(false);
     const [query, setQuery] = useState("");
-
-    useEffect(() => {
-        if (!initData) { setLoading(false); return; }
-        setLoading(true);
-        setError(null);
-        getBooks(initData)
-            .then(setBooks)
-            .catch((e) => setError((e as Error).message))
-            .finally(() => setLoading(false));
-    }, [initData]);
 
     // Wire the Telegram hardware/back-gesture button to close the full-screen reader.
     // Cast to `any` here: the project's TelegramWebApp type doesn't declare BackButton,
