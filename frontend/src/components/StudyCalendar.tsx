@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
 import Toast from "./Toast";
-import { getMyEvents, createEvent, deleteEvent, type StudyEvent } from "../data/eventsApi";
+import { useCreateEvent, useDeleteEvent, useMyEvents } from "../data/useEventsQueries";
+import type { StudyEvent } from "../data/eventsApi";
 
 type StudyCalendarProps = {
     initData: string;
@@ -16,9 +17,6 @@ const formatDateKey = (year: number, month: number, day: number) => {
     return `${year}-${m}-${d}`;
 };
 
-// Group flat events (each with a UTC ISO startTime) into a map keyed by the
-// event's *local* calendar day, so a session at 11pm shows on the right tile
-// regardless of what UTC date it crosses into.
 function groupByLocalDay(events: StudyEvent[]): EventsMap {
     const map: EventsMap = {};
     for (const event of events) {
@@ -47,27 +45,15 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
     const [eventTitle, setEventTitle] = useState("");
     const [eventTime, setEventTime] = useState("16:00");
 
-    const [events, setEvents] = useState<StudyEvent[]>([]);
-    const [loading, setLoading] = useState(Boolean(initData));
-    const [loadError, setLoadError] = useState<string | null>(null);
+    const { data: rawEvents, isLoading: loading, error: fetchError } = useMyEvents(initData);
+    const events = rawEvents ?? [];
+    const loadError = fetchError ? (fetchError as Error).message : null;
+
+    const createMutation = useCreateEvent(initData);
+    const deleteMutation = useDeleteEvent(initData);
 
     const [submitError, setSubmitError] = useState<string | null>(null);
-    const [isSubmitting, setIsSubmitting] = useState(false);
     const [toastMessage, setToastMessage] = useState<string | null>(null);
-
-    const refresh = useCallback(() => {
-        if (!initData) { setLoading(false); return; }
-        setLoading(true);
-        setLoadError(null);
-        getMyEvents(initData)
-            .then(setEvents)
-            .catch((e) => setLoadError((e as Error).message))
-            .finally(() => setLoading(false));
-    }, [initData]);
-
-    useEffect(() => {
-        refresh();
-    }, [refresh]);
 
     const eventsByDay = groupByLocalDay(events);
 
@@ -102,28 +88,21 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
         const [hours, minutes] = timeString.split(":").map(Number);
         const startDateTime = new Date(sYear, sMonth - 1, sDay, hours, minutes);
 
-        setIsSubmitting(true);
         try {
-            const saved = await createEvent(initData, eventTitle.trim(), startDateTime.toISOString());
-            setEvents((prev) => [...prev, saved]);
+            await createMutation.mutateAsync({ title: eventTitle.trim(), startTime: startDateTime.toISOString() });
             setToastMessage("Session added ✓");
             setEventTitle("");
             setIsAdding(false);
         } catch (err) {
             setSubmitError((err as Error).message);
-        } finally {
-            setIsSubmitting(false);
         }
     };
 
     const handleDeleteEvent = async (eventId: number) => {
         if (!initData) return;
-        const previous = events;
-        setEvents((prev) => prev.filter((evt) => evt.id !== eventId));
         try {
-            await deleteEvent(initData, eventId);
+            await deleteMutation.mutateAsync(eventId);
         } catch (err) {
-            setEvents(previous); // roll back on failure
             setSubmitError((err as Error).message);
         }
     };
@@ -159,7 +138,6 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
             </div>
 
             <div className="calendar-card">
-                {/* Month Navigation */}
                 <div className="calendar-header">
                     <h3>{monthName} {year}</h3>
                     <div style={{ display: "flex", gap: "6px" }}>
@@ -188,7 +166,6 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
                     </p>
                 )}
 
-                {/* Grid */}
                 <div className="calendar-grid">
                     {WEEKDAYS.map((day) => (
                         <div key={day} className="weekday-header">
@@ -229,7 +206,6 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
                     })}
                 </div>
 
-                {/* Agenda */}
                 <div className="selected-day-events">
                     <div className="agenda-header">
                         <h4>Events for {selectedFormattedText}</h4>
@@ -253,7 +229,6 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
                         </p>
                     )}
 
-                    {/* Form */}
                     {isAdding && (
                         <form onSubmit={handleAddEventSubmit} className="add-event-form">
                             <input
@@ -278,14 +253,13 @@ export default function StudyCalendar({ initData }: StudyCalendarProps) {
                                 >
                                     Cancel
                                 </button>
-                                <button type="submit" className="btn-primary bubble-button" disabled={isSubmitting}>
-                                    {isSubmitting ? "Saving…" : "Save"}
+                                <button type="submit" className="btn-primary bubble-button" disabled={createMutation.isPending}>
+                                    {createMutation.isPending ? "Saving…" : "Save"}
                                 </button>
                             </div>
                         </form>
                     )}
 
-                    {/* Events List */}
                     {loading ? (
                         <p className="subtitle" style={{ fontSize: "13px" }}>Loading…</p>
                     ) : activeEvents.length > 0 ? (

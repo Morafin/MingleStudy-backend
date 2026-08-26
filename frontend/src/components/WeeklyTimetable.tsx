@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
-    createScheduleEntriesBulk,
-    createScheduleEntry,
-    deleteScheduleEntry,
-    getMySchedule,
-    updateScheduleEntry,
     type ScheduleEntry,
     type ScheduleEntryInput,
     type Weekday,
 } from "../data/scheduleApi";
+import {
+    useCreateScheduleEntriesBulk,
+    useCreateScheduleEntry,
+    useDeleteScheduleEntry,
+    useMySchedule,
+    useUpdateScheduleEntry,
+} from "../data/useScheduleQueries";
 import { ISFT_PRESET, JS_DAY_TO_WEEKDAY, WEEKDAYS, dayLabel } from "../data/timetableData";
 import { haptics } from "../data/haptics";
 
@@ -46,29 +48,23 @@ function isToday(day: Weekday): boolean {
 }
 
 export default function WeeklyTimetable({ initData, universityName }: WeeklyTimetableProps) {
-    const [entries, setEntries] = useState<ScheduleEntry[]>([]);
-    const [loading, setLoading] = useState(Boolean(initData));
+    const { data: rawEntries, isLoading: loading, error: fetchError } = useMySchedule(initData);
+    const entries = rawEntries ?? [];
+    const loadErrorMessage = fetchError ? (fetchError as Error).message : null;
+
+    const createMutation = useCreateScheduleEntry(initData);
+    const updateMutation = useUpdateScheduleEntry(initData);
+    const bulkMutation = useCreateScheduleEntriesBulk(initData);
+    const deleteMutation = useDeleteScheduleEntry(initData);
+
+    const saving = createMutation.isPending || updateMutation.isPending;
+    const deletingId = deleteMutation.isPending ? (deleteMutation.variables as number) : null;
+
     const [error, setError] = useState<string | null>(null);
-    const [saving, setSaving] = useState(false);
     const [editingId, setEditingId] = useState<number | "new" | null>(null);
     const [form, setForm] = useState<ScheduleEntryInput>(EMPTY_FORM);
 
-    // Track the lesson pending delete confirmation (in-app modal instead of window.confirm,
-    // since Telegram's WebView silently suppresses repeated native confirm() dialogs after a
-    // few calls — it just returns false with no UI, which looks like the delete button "stops working").
     const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
-    // Track which entry is actively being deleted so we can disable its button and prevent
-    // double-fires from a fast double-tap while the request is in flight.
-    const [deletingId, setDeletingId] = useState<number | null>(null);
-
-    useEffect(() => {
-        if (!initData) { setLoading(false); return; }
-        setLoading(true);
-        getMySchedule(initData)
-            .then(setEntries)
-            .catch((e) => setError((e as Error).message))
-            .finally(() => setLoading(false));
-    }, [initData]);
 
     const days = useMemo(orderedDaysStartingToday, []);
 
@@ -113,7 +109,6 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
         if (!form.subject.trim()) { setError("Subject is required."); haptics.error(); return; }
         if (form.endTime <= form.startTime) { setError("End time must be after start time."); haptics.error(); return; }
 
-        setSaving(true);
         setError(null);
         try {
             const payload: ScheduleEntryInput = {
@@ -124,19 +119,15 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                 room: form.room?.trim() || undefined,
             };
             if (editingId === "new") {
-                const created = await createScheduleEntry(initData, payload);
-                setEntries((prev) => [...prev, created]);
+                await createMutation.mutateAsync(payload);
             } else if (typeof editingId === "number") {
-                const updated = await updateScheduleEntry(initData, editingId, payload);
-                setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)));
+                await updateMutation.mutateAsync({ id: editingId, entry: payload });
             }
             haptics.success();
             closeForm();
         } catch (e) {
             setError((e as Error).message);
             haptics.error();
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -153,33 +144,26 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
     const confirmDelete = async () => {
         if (pendingDeleteId === null) return;
         const id = pendingDeleteId;
-        setDeletingId(id);
         setError(null);
         try {
-            await deleteScheduleEntry(initData, id);
-            setEntries((prev) => prev.filter((e) => e.id !== id));
+            await deleteMutation.mutateAsync(id);
             haptics.warning();
         } catch (e) {
             setError((e as Error).message);
             haptics.error();
         } finally {
-            setDeletingId(null);
             setPendingDeleteId(null);
         }
     };
 
     const handleIsftImport = async () => {
-        setSaving(true);
         setError(null);
         try {
-            const created = await createScheduleEntriesBulk(initData, ISFT_PRESET);
-            setEntries(created);
+            await bulkMutation.mutateAsync(ISFT_PRESET);
             haptics.success();
         } catch (e) {
             setError((e as Error).message);
             haptics.error();
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -196,12 +180,14 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
 
             <div className="timetable-card">
                 {loading && <p className="subtitle">Loading your schedule…</p>}
-                {error && !pendingDeleteLesson && editingId === null && <p className="schedule-error">{error}</p>}
+                {(loadErrorMessage || error) && !pendingDeleteLesson && editingId === null && (
+                    <p className="schedule-error">{error ?? loadErrorMessage}</p>
+                )}
 
                 {!loading && showIsftImport && (
                     <div className="schedule-import-banner">
                         <p className="subtitle">Start from ISFT's default weekly schedule?</p>
-                        <button className="schedule-add-btn" onClick={handleIsftImport} disabled={saving}>
+                        <button className="schedule-add-btn" onClick={handleIsftImport} disabled={bulkMutation.isPending}>
                             Import ISFT schedule
                         </button>
                     </div>
@@ -371,7 +357,7 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                         <div className="ios-alert-body">
                             <h3 className="ios-alert-title">Remove Class?</h3>
                             <p className="ios-alert-message">
-                                “{pendingDeleteLesson.subject}” on {dayLabel(pendingDeleteLesson.day)} at {pendingDeleteLesson.startTime} will be removed from your schedule.
+                                "{pendingDeleteLesson.subject}" on {dayLabel(pendingDeleteLesson.day)} at {pendingDeleteLesson.startTime} will be removed from your schedule.
                             </p>
                             {error && <p className="ios-alert-error">{error}</p>}
                         </div>
@@ -380,16 +366,16 @@ export default function WeeklyTimetable({ initData, universityName }: WeeklyTime
                             <button
                                 className="ios-alert-btn"
                                 onClick={cancelDelete}
-                                disabled={deletingId !== null}
+                                disabled={deleteMutation.isPending}
                             >
                                 Cancel
                             </button>
                             <button
                                 className="ios-alert-btn ios-alert-btn-destructive"
                                 onClick={confirmDelete}
-                                disabled={deletingId !== null}
+                                disabled={deleteMutation.isPending}
                             >
-                                {deletingId !== null ? "Removing…" : "Remove"}
+                                {deleteMutation.isPending ? "Removing…" : "Remove"}
                             </button>
                         </div>
                     </div>
