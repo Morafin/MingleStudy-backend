@@ -69,10 +69,21 @@ class TelegramAuthService(
     // Only bumps lastSeenAt for profiles that already exist. New users get their
     // row created by ProfileController.findOrCreate on their first /api/me call,
     // so there's nothing to touch here yet for them.
+    //
+    // verify() runs on every protected endpoint, so without throttling this was a
+    // findById + save on effectively every request the app makes. Only writing when
+    // the stored value is stale keeps the "online" signal fresh (still accurate to
+    // within lastSeenRefreshInterval for the activity dot on group member cards)
+    // while cutting steady-state writes by roughly the interval's worth of requests.
+    private val lastSeenRefreshInterval = Duration.ofMinutes(5)
+
     private fun touchLastSeen(telegramId: Long) {
-        profiles.findById(telegramId).ifPresent {
-            it.lastSeenAt = Instant.now()
-            profiles.save(it)
+        profiles.findById(telegramId).ifPresent { profile ->
+            val last = profile.lastSeenAt
+            if (last == null || Duration.between(last, Instant.now()) >= lastSeenRefreshInterval) {
+                profile.lastSeenAt = Instant.now()
+                profiles.save(profile)
+            }
         }
     }
 

@@ -24,6 +24,15 @@ function GroupsSkeleton() {
     );
 }
 
+function IconSearch() {
+    return (
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.2" y2="16.2" />
+        </svg>
+    );
+}
+
 function IconShare() {
     return (
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -40,6 +49,7 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
     const { data: group, isLoading: loading, error: fetchError } = useMyGroup(initData);
     const error = fetchError ? (fetchError instanceof Error ? fetchError.message : String(fetchError)) : null;
     const [copied, setCopied] = useState(false);
+    const [query, setQuery] = useState("");
 
     async function handleInvite(universityId: number) {
         const link = `https://t.me/${BOT_USERNAME}?startapp=uni_${universityId}`;
@@ -159,51 +169,82 @@ export default function GroupsPage({ initData, onEditProfile }: GroupsPageProps)
                 </div>
             ) : (
                 <>
+                    {members.length > 8 && (
+                        <div className="groups-search-wrap">
+                            <IconSearch />
+                            <input
+                                type="text"
+                                className="groups-search-input"
+                                placeholder="Search classmates"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
+                            />
+                        </div>
+                    )}
+
                     <p className="ios-group-label">
                         {memberCount} classmate{memberCount === 1 ? "" : "s"} here with you
+                        {group.truncated && " · showing the first " + members.length}
                     </p>
-                    <div className="ios-group">
-                        {members.map((member) => {
-                            const status = getActivityStatus(member.lastSeenAt);
-                            return (
-                                <div key={member.telegramId} className="ios-row group-member-row">
-                                    <div className="avatar group-member-ring">
-                                        {member.photoUrl ? (
-                                            <img src={member.photoUrl} alt={member.firstName} />
-                                        ) : (
-                                            <span>{member.firstName.charAt(0).toUpperCase()}</span>
-                                        )}
-                                    </div>
-                                    <div className="ios-row-main">
-                                        <span className="ios-row-title">
-                                            {member.firstName} {member.lastName}
-                                        </span>
-                                        {member.username && (
-                                            <span className="ios-row-sub">@{member.username}</span>
-                                        )}
-                                        {member.bio && <span className="ios-row-sub">{member.bio}</span>}
-                                        {status && (
-                                            <span className={`group-member-status ${status.isRecent ? "is-recent" : ""}`}>
-                                                <span className="group-member-status-dot" />
-                                                {status.label}
-                                            </span>
-                                        )}
-                                    </div>
-                                    {member.username && (
-                                    <a
-                                            className="group-member-message-btn"
-                                            href={`https://t.me/${member.username}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            onClick={(e) => { e.stopPropagation(); haptics.tap("light"); }}
-                                        >
-                                            Message
-                                        </a>
-                                    )}
-                                </div>
-                            );
-                        })}
-                    </div>
+
+                    {(() => {
+                        const q = query.trim().toLowerCase();
+                        const filtered = q
+                            ? members.filter((member) =>
+                                  `${member.firstName} ${member.lastName}`.toLowerCase().includes(q) ||
+                                  (member.username?.toLowerCase().includes(q) ?? false),
+                              )
+                            : members;
+
+                        if (filtered.length === 0) {
+                            return <p className="subtitle groups-search-empty">No classmates match "{query.trim()}".</p>;
+                        }
+
+                        return (
+                            <div className="ios-group">
+                                {filtered.map((member) => {
+                                    const status = getActivityStatus(member.lastSeenAt);
+                                    return (
+                                        <div key={member.telegramId} className="ios-row group-member-row">
+                                            <div className="avatar group-member-ring">
+                                                {member.photoUrl ? (
+                                                    <img src={member.photoUrl} alt={member.firstName} />
+                                                ) : (
+                                                    <span>{member.firstName.charAt(0).toUpperCase()}</span>
+                                                )}
+                                            </div>
+                                            <div className="ios-row-main">
+                                                <span className="ios-row-title">
+                                                    {member.firstName} {member.lastName}
+                                                </span>
+                                                {member.username && (
+                                                    <span className="ios-row-sub">@{member.username}</span>
+                                                )}
+                                                {member.bio && <span className="ios-row-sub">{member.bio}</span>}
+                                                {status && (
+                                                    <span className={`group-member-status ${status.isRecent ? "is-recent" : ""}`}>
+                                                        <span className="group-member-status-dot" />
+                                                        {status.label}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {member.username && (
+                                                <a
+                                                    className="group-member-message-btn"
+                                                    href={`https://t.me/${member.username}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    onClick={(e) => { e.stopPropagation(); haptics.tap("light"); }}
+                                                >
+                                                    Message
+                                                </a>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        );
+                    })()}
                 </>
             )}
         </section>

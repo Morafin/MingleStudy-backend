@@ -25,6 +25,8 @@ export type MyGroup = {
   university: University | null;
   memberCount: number;
   members: GroupMember[];
+  // true when the backend capped the member list below memberCount (large group)
+  truncated: boolean;
 };
 
 export type JoinInviteResult = {
