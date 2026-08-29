@@ -1,30 +1,78 @@
-/* ---------- Desktop: macOS-style flat sidebar ---------- */
+/* ---------- Desktop: floating light-glass sidebar ---------- */
 
 .sidebar {
     position: relative;
     display: flex;
-    flex: 0 0 220px;
+    flex: 0 0 232px;
     flex-direction: column;
     gap: 2px;
-    width: 220px;
-    padding: 18px 10px 20px;
-    background: var(--bg-bottom);
-    border-right: 1px solid var(--line);
+    width: 232px;
+    margin: 18px 0 18px 18px;
+    padding: 20px 12px 20px;
+    border-radius: 24px;
+    overflow: hidden;
     box-sizing: border-box;
+
+    background: rgba(255, 255, 255, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.6) inset,
+            0 18px 40px rgba(20, 20, 20, 0.08),
+            0 2px 8px rgba(20, 20, 20, 0.04);
+    backdrop-filter: blur(22px) saturate(140%);
+    -webkit-backdrop-filter: blur(22px) saturate(140%);
+}
+
+:root[data-theme="dark"] .sidebar {
+    background: rgba(28, 28, 30, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow:
+            0 1px 0 rgba(255, 255, 255, 0.05) inset,
+            0 18px 40px rgba(0, 0, 0, 0.35),
+            0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Cursor-tracking spotlight, positioned via --mx / --my set in JS.
+   Kept very faint — a light glass surface only needs a whisper of it. */
+.sidebar-glow {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+    background: radial-gradient(
+            280px circle at var(--mx, 50%) var(--my, 0%),
+            rgba(255, 255, 255, 0.55),
+            transparent 60%
+    );
+    transition: background 0.05s linear;
+}
+
+:root[data-theme="dark"] .sidebar-glow {
+    background: radial-gradient(
+            280px circle at var(--mx, 50%) var(--my, 0%),
+            rgba(255, 255, 255, 0.06),
+            transparent 60%
+    );
+}
+
+.sidebar > *:not(.sidebar-glow) {
+    position: relative;
+    z-index: 1;
 }
 
 .sidebar-brand {
     display: flex;
     align-items: center;
-    padding: 4px 8px 18px;
+    justify-content: center;
+    padding: 4px 8px 20px;
 }
 
 .sidebar-brand-name {
     color: var(--ink);
     font-size: 16px;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    white-space: nowrap;
 }
 
 .sidebar-account {
@@ -32,33 +80,45 @@
     align-items: center;
     gap: 9px;
     width: 100%;
-    padding: 6px 8px;
-    margin-bottom: 14px;
-    border: none;
-    border-radius: 8px;
-    background: transparent;
+    padding: 8px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.5);
     text-align: left;
     cursor: pointer;
-    transition: background 0.12s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
     box-sizing: border-box;
 }
 
+:root[data-theme="dark"] .sidebar-account {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.04);
+}
+
 .sidebar-account:hover {
-    background: var(--card-alt);
+    background: rgba(255, 255, 255, 0.85);
+    border-color: rgba(0, 0, 0, 0.09);
+}
+
+:root[data-theme="dark"] .sidebar-account:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-account-avatar {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     flex-shrink: 0;
     overflow: hidden;
     border-radius: 50%;
     background: var(--ink);
-    color: #ffffff;
-    font-size: 12.5px;
+    color: var(--card);
+    font-size: 13px;
     font-weight: 700;
+    border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .sidebar-account-avatar img {
@@ -96,35 +156,48 @@
 .sidebar-nav {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 3px;
 }
 
 .nav-row {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 11px;
     width: 100%;
-    padding: 7px 9px;
-    border: none;
-    border-radius: 7px;
+    padding: 9px 10px;
+    border: 1px solid transparent;
+    border-radius: 12px;
     background: transparent;
     color: var(--ink-soft);
     text-align: left;
     font-size: 13.5px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
     box-sizing: border-box;
 }
 
 .nav-row:hover {
-    background: var(--card-alt);
+    background: rgba(255, 255, 255, 0.6);
+    border-color: rgba(0, 0, 0, 0.05);
     color: var(--ink);
 }
 
+:root[data-theme="dark"] .nav-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.06);
+}
+
+.nav-row:active {
+    transform: scale(0.98);
+}
+
+/* Active item — iOS/macOS system green pill, same in light and dark */
 .nav-row.is-active {
-    background: var(--accent);
+    background: #34C759;
+    border-color: #34C759;
     color: #ffffff;
+    box-shadow: 0 4px 14px rgba(52, 199, 89, 0.35);
 }
 
 .nav-row-icon {
@@ -149,13 +222,12 @@
     white-space: nowrap;
 }
 
-/* Bottom tab bar for mobile — flat and clean, iOS tab bar aesthetic.
-   Hidden on desktop; the macOS-style list above is desktop-only too. */
+/* Bottom tab bar for mobile — frosted glass, hidden on desktop */
 .sidebar-tabbar {
     display: none;
 }
 
-/* Mobile: collapse to a fixed bottom icon bar — unchanged iOS-style bar */
+/* Mobile: collapse to a fixed frosted-glass bottom bar */
 @media (max-width: 680px) {
     .sidebar {
         position: fixed;
@@ -170,12 +242,17 @@
         justify-content: center;
         align-items: center;
         gap: 0;
+        margin: 0;
         padding: 0;
+        border-radius: 0;
         background: transparent;
-        border-right: none;
+        border: none;
         box-shadow: none;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
+    .sidebar-glow,
     .sidebar-brand,
     .sidebar-account,
     .sidebar-nav {
@@ -188,15 +265,15 @@
         justify-content: space-around;
         align-items: center;
         padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
-        background: rgba(249, 249, 249, 0.96);
-        backdrop-filter: blur(16px) saturate(180%);
-        -webkit-backdrop-filter: blur(16px) saturate(180%);
-        border-top: 1px solid rgba(0, 0, 0, 0.12);
+        background: rgba(249, 249, 249, 0.85);
+        backdrop-filter: blur(20px) saturate(160%);
+        -webkit-backdrop-filter: blur(20px) saturate(160%);
+        border-top: 1px solid rgba(0, 0, 0, 0.08);
     }
 
     :root[data-theme="dark"] .sidebar-tabbar {
-        background: rgba(28, 28, 30, 0.92);
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(28, 28, 30, 0.85);
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .tab-item {

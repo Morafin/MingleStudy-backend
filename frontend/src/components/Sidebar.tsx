@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 type SidebarProps = {
     firstName: string;
@@ -9,10 +9,11 @@ type SidebarProps = {
     onGroupsClick: () => void;
     onJournalClick: () => void;
     onLibraryClick: () => void;
+    onGazetteClick: () => void;
     onSettingsClick: () => void;
 };
 
-type NavKey = "dashboard" | "calendar" | "journal" | "groups" | "library" | "settings";
+type NavKey = "dashboard" | "calendar" | "journal" | "groups" | "library" | "gazette" | "settings";
 
 export default function Sidebar({
                                     firstName,
@@ -23,9 +24,21 @@ export default function Sidebar({
                                     onGroupsClick,
                                     onJournalClick,
                                     onLibraryClick,
+                                    onGazetteClick,
                                     onSettingsClick,
                                 }: SidebarProps) {
     const [active, setActive] = useState<NavKey>("dashboard");
+    const sidebarRef = useRef<HTMLElement>(null);
+
+    const handleMouseMove = (e: React.MouseEvent<HTMLElement>) => {
+        const el = sidebarRef.current;
+        if (!el) return;
+        const rect = el.getBoundingClientRect();
+        const mx = ((e.clientX - rect.left) / rect.width) * 100;
+        const my = ((e.clientY - rect.top) / rect.height) * 100;
+        el.style.setProperty("--mx", `${mx}%`);
+        el.style.setProperty("--my", `${my}%`);
+    };
 
     const handleDashboardClick = () => {
         setActive("dashboard");
@@ -55,6 +68,11 @@ export default function Sidebar({
         onLibraryClick();
     };
 
+    const handleGazetteClick = () => {
+        setActive("gazette");
+        onGazetteClick();
+    };
+
     const handleSettingsClick = () => {
         setActive("settings");
         onSettingsClick();
@@ -66,7 +84,9 @@ export default function Sidebar({
     };
 
     return (
-        <aside className="sidebar">
+        <aside className="sidebar" ref={sidebarRef} onMouseMove={handleMouseMove}>
+            <div className="sidebar-glow" aria-hidden="true" />
+
             <div className="sidebar-brand">
                 <span className="sidebar-brand-name">MingleStudy</span>
             </div>
@@ -147,6 +167,18 @@ export default function Sidebar({
                 </button>
 
                 <button
+                    className={`nav-row ${active === "gazette" ? "is-active" : ""}`}
+                    onClick={handleGazetteClick}
+                >
+                    <span className="nav-row-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H7a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 002 2zm0 0a2 2 0 002-2V9a1 1 0 00-1-1h-3m-6 3h6m-6 4h6m-8-8h.01" />
+                        </svg>
+                    </span>
+                    <span className="nav-row-label">Gazette</span>
+                </button>
+
+                <button
                     className={`nav-row ${active === "settings" ? "is-active" : ""}`}
                     onClick={handleSettingsClick}
                 >
@@ -189,11 +221,11 @@ export default function Sidebar({
                     <span>Groups</span>
                 </button>
 
-                <button className="tab-item" onClick={handleLibraryClick}>
+                <button className="tab-item" onClick={handleGazetteClick}>
                     <svg className="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H7a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v12a2 2 0 002 2zm0 0a2 2 0 002-2V9a1 1 0 00-1-1h-3m-6 3h6m-6 4h6m-8-8h.01" />
                     </svg>
-                    <span>Library</span>
+                    <span>Gazette</span>
                 </button>
 
                 <button className="tab-item" onClick={handleSettingsClick}>

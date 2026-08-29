@@ -31,6 +31,9 @@ dependencies {
 	implementation("net.javacrumbs.shedlock:shedlock-spring:7.9.0")
 	implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:7.9.0")
 
+	// RSS/Atom feed parsing (Gazette feature)
+	implementation("com.rometools:rome:2.1.0")
+
 	// API documentation
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
 

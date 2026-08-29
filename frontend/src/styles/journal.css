@@ -83,6 +83,23 @@
     font-family: inherit;
 }
 
+/* Save status + live word count, shown in the desktop titlebar next to the icons.
+   Mirrors the mobile ios-nav-status indicator, which desktop previously lacked
+   entirely — there was no feedback that autosave had actually run. */
+.journal-titlebar-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: 10px;
+    font-size: 12px;
+    color: var(--ink-soft);
+    white-space: nowrap;
+}
+
+.journal-titlebar-status-dot {
+    opacity: 0.6;
+}
+
 /* iOS-style nav — mobile only */
 .journal-ios-nav {
     display: none;
@@ -244,6 +261,13 @@
     max-width: 100%;
 }
 
+.journal-search-highlight {
+    background: color-mix(in srgb, var(--accent) 35%, transparent);
+    color: inherit;
+    border-radius: 2px;
+    padding: 0 1px;
+}
+
 /* ---------- Pin star ---------- */
 .journal-pin-star {
     display: flex;
@@ -318,6 +342,26 @@
     font-size: 12px;
     color: var(--ink-soft);
     margin-bottom: 16px;
+    cursor: default;
+}
+
+/* Title line of the split editor — bold and larger than the body, like Apple Notes,
+   so the first line reads as a heading instead of blending into flat plaintext. */
+.journal-title-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    padding: 0;
+    margin-bottom: 6px;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.journal-title-input::placeholder {
+    color: var(--ink-soft);
 }
 
 .journal-editor-empty {

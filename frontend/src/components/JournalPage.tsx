@@ -20,6 +20,21 @@ function formatRowDate(iso: string): string {
     return new Date(iso).toLocaleDateString("default", { month: "short", day: "numeric" });
 }
 
+// Row subtitle: relative for anything edited today, falls back to the absolute
+// "Aug 29" format otherwise. The exact timestamp is always available via the row's
+// title tooltip (see renderNoteRow) regardless of which format is shown here.
+function formatRelative(iso: string): string {
+    const date = new Date(iso);
+    const now = new Date();
+    if (date.toDateString() !== now.toDateString()) return formatRowDate(iso);
+
+    const diffMin = Math.floor((now.getTime() - date.getTime()) / 60000);
+    if (diffMin < 1) return "Just now";
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.floor(diffMin / 60);
+    return `${diffHr}h ago`;
+}
+
 function formatEditorTimestamp(iso: string): string {
     return new Date(iso).toLocaleString("default", {
         day: "numeric",
@@ -46,6 +61,42 @@ function notePreview(content: string): string {
     const lines = content.split("\n").filter((l) => l.trim().length > 0);
     const rest = lines.slice(1).join(" ").trim();
     return rest.length > 80 ? `${rest.slice(0, 80)}…` : rest;
+}
+
+// Splits a note's flat content string into an editable title (first line) and
+// body (everything after), and back again. Keeps the backend/API contract as a
+// single "content" string while letting the editor render title/body distinctly.
+function splitContent(content: string): { title: string; body: string } {
+    const nlIndex = content.indexOf("\n");
+    if (nlIndex === -1) return { title: content, body: "" };
+    return { title: content.slice(0, nlIndex), body: content.slice(nlIndex + 1) };
+}
+
+function joinContent(title: string, body: string): string {
+    return body ? `${title}\n${body}` : title;
+}
+
+function wordCount(content: string): number {
+    const trimmed = content.trim();
+    return trimmed ? trimmed.split(/\s+/).length : 0;
+}
+
+// Wraps the first case-insensitive match of `query` in `text` with a <mark>, so
+// search results show *why* they matched. Returns plain text when there's no
+// active query or no match, so it's a safe drop-in wherever noteTitle/notePreview
+// were rendered directly before.
+function highlightMatch(text: string, query: string) {
+    const q = query.trim();
+    if (!q) return text;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase());
+    if (idx === -1) return text;
+    return (
+        <>
+            {text.slice(0, idx)}
+            <mark className="journal-search-highlight">{text.slice(idx, idx + q.length)}</mark>
+            {text.slice(idx + q.length)}
+        </>
+    );
 }
 
 function sortEntries(list: JournalEntry[]): JournalEntry[] {
@@ -125,7 +176,6 @@ function IconStar({ filled }: { filled: boolean }) {
 
 export default function JournalPage({ initData }: JournalPageProps) {
     const { data: rawEntries, isLoading: loading, error: fetchError } = useJournalEntries(initData);
-    const entries = useMemo(() => sortEntries(rawEntries ?? []), [rawEntries]);
 
     const createMutation = useCreateJournalEntry(initData);
     const updateMutation = useUpdateJournalEntry(initData);
@@ -148,7 +198,24 @@ export default function JournalPage({ initData }: JournalPageProps) {
     const dragBaseline = useRef(0);
     const draggingId = useRef<number | null>(null);
 
+    // Delete-with-undo: deleting hides the note immediately and shows a toast with
+    // an Undo action, instead of a jarring native window.confirm() dialog. The
+    // actual API delete only fires once the undo window (below) expires unanswered.
+    const [pendingDeleteId, setPendingDeleteId] = useState<number | null>(null);
+    const pendingDeleteRef = useRef<number | null>(null);
+    const pendingDeleteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const preDeleteSelection = useRef<{ id: number; content: string } | null>(null);
+    const UNDO_WINDOW_MS = 4000;
+
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const bodyRef = useRef<HTMLTextAreaElement>(null);
+
+    // Hide the note optimistically the moment delete is requested, before the
+    // network call has actually fired (see handleDeleteNote / commitPendingDelete).
+    const entries = useMemo(
+        () => sortEntries((rawEntries ?? []).filter((e) => e.id !== pendingDeleteId)),
+        [rawEntries, pendingDeleteId],
+    );
 
     useEffect(() => {
         if (fetchError) setError((fetchError as Error).message);
@@ -239,25 +306,68 @@ export default function JournalPage({ initData }: JournalPageProps) {
         setMobileView("list");
     }
 
-    async function handleDeleteNote(id: number) {
-        if (!window.confirm("Delete this note?")) return;
+    // Commits a delete that's been sitting in the undo window: fires the real API
+    // call and clears the pending state. Called either when the timer expires or
+    // immediately if the user starts deleting a second note before the first commits.
+    async function commitPendingDelete() {
+        const id = pendingDeleteRef.current;
+        if (id == null) return;
+        pendingDeleteRef.current = null;
+        setPendingDeleteId(null);
+        if (pendingDeleteTimer.current) {
+            clearTimeout(pendingDeleteTimer.current);
+            pendingDeleteTimer.current = null;
+        }
         try {
             await deleteMutation.mutateAsync(id);
-            const remaining = entries.filter((e) => e.id !== id);
-            if (id === selectedId) {
-                const next = remaining.length > 0 ? remaining[0].id : null;
-                setSelectedId(next);
-                setContent(next != null ? remaining.find((e) => e.id === next)?.content ?? "" : "");
-                setSaveState("idle");
-                setMobileView("list");
-            }
-            setSwipedRowId((cur) => (cur === id ? null : cur));
-            setToastMessage("Note deleted");
-            haptics.warning();
         } catch (e) {
             setError((e as Error).message);
             haptics.error();
         }
+    }
+
+    async function handleDeleteNote(id: number) {
+        haptics.warning();
+
+        if (pendingDeleteRef.current != null) await commitPendingDelete();
+
+        pendingDeleteRef.current = id;
+        setPendingDeleteId(id);
+        setSwipedRowId((cur) => (cur === id ? null : cur));
+
+        if (id === selectedId) {
+            preDeleteSelection.current = { id, content };
+            const remaining = entries.filter((e) => e.id !== id);
+            const next = remaining.length > 0 ? remaining[0].id : null;
+            setSelectedId(next);
+            setContent(next != null ? remaining.find((e) => e.id === next)?.content ?? "" : "");
+            setSaveState("idle");
+            setMobileView("list");
+        } else {
+            preDeleteSelection.current = null;
+        }
+
+        setToastMessage("Note deleted");
+        pendingDeleteTimer.current = setTimeout(commitPendingDelete, UNDO_WINDOW_MS);
+    }
+
+    function undoDelete() {
+        if (pendingDeleteTimer.current) {
+            clearTimeout(pendingDeleteTimer.current);
+            pendingDeleteTimer.current = null;
+        }
+        const restoredId = pendingDeleteRef.current;
+        pendingDeleteRef.current = null;
+        setPendingDeleteId(null);
+        haptics.tap("light");
+
+        if (preDeleteSelection.current?.id === restoredId) {
+            setSelectedId(preDeleteSelection.current.id);
+            setContent(preDeleteSelection.current.content);
+            setSaveState("idle");
+            setMobileView("editor");
+        }
+        preDeleteSelection.current = null;
     }
 
     async function handleTogglePin(id: number, e?: MouseEvent) {
@@ -342,10 +452,15 @@ export default function JournalPage({ initData }: JournalPageProps) {
     }, [initData, selectedId, entries]);
 
     const selectedEntry = entries.find((e) => e.id === selectedId) ?? null;
+    const { title: titlePart, body: bodyPart } = useMemo(() => splitContent(content), [content]);
+    const editorWordCount = useMemo(() => wordCount(content), [content]);
+    const MAX_CONTENT_LENGTH = 5000;
+    const remainingBodyLength = Math.max(0, MAX_CONTENT_LENGTH - titlePart.length - 1);
 
     function renderNoteRow(entry: JournalEntry) {
         const isSwiped = swipedRowId === entry.id;
         const liveDx = draggingId.current === entry.id ? dragDx : isSwiped ? SWIPE_OPEN_OFFSET : 0;
+        const preview = notePreview(entry.content);
 
         return (
             <div key={entry.id} className="journal-row-wrapper">
@@ -366,6 +481,7 @@ export default function JournalPage({ initData }: JournalPageProps) {
                     onTouchEnd={() => handleTouchEnd(entry.id)}
                     role="button"
                     tabIndex={0}
+                    title={`Edited ${formatEditorTimestamp(entry.updatedAt)}`}
                 >
                     <button
                         type="button"
@@ -376,10 +492,10 @@ export default function JournalPage({ initData }: JournalPageProps) {
                         <IconStar filled={entry.pinned} />
                     </button>
                     <span className="journal-note-row-text">
-                        <span className="journal-note-row-title">{noteTitle(entry.content)}</span>
+                        <span className="journal-note-row-title">{highlightMatch(noteTitle(entry.content), query)}</span>
                         <span className="journal-note-row-sub">
-                            {formatRowDate(entry.updatedAt)}
-                            {notePreview(entry.content) && `  ${notePreview(entry.content)}`}
+                            {formatRelative(entry.updatedAt)}
+                            {preview && <> {highlightMatch(preview, query)}</>}
                         </span>
                     </span>
                 </div>
@@ -399,7 +515,14 @@ export default function JournalPage({ initData }: JournalPageProps) {
 
     return (
         <section className="journal-section">
-            {toastMessage && <Toast message={toastMessage} onDismiss={() => setToastMessage(null)} />}
+            {toastMessage && (
+                <Toast
+                    message={toastMessage}
+                    duration={pendingDeleteId != null ? UNDO_WINDOW_MS : undefined}
+                    onDismiss={() => setToastMessage(null)}
+                    action={pendingDeleteId != null ? { label: "Undo", onClick: undoDelete } : undefined}
+                />
+            )}
 
             <div className="journal-window">
                 {/* macOS-style titlebar — desktop only */}
@@ -426,6 +549,13 @@ export default function JournalPage({ initData }: JournalPageProps) {
                             <IconTrash />
                         </button>
                     </div>
+                    {selectedEntry && (
+                        <div className="journal-titlebar-status">
+                            <span>{editorWordCount} word{editorWordCount === 1 ? "" : "s"}</span>
+                            <span className="journal-titlebar-status-dot">·</span>
+                            <span>{saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved" : "\u00A0"}</span>
+                        </div>
+                    )}
                     <div className="journal-search">
                         <IconSearch />
                         <input ref={searchInputRef} type="text" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search" />
@@ -505,16 +635,34 @@ export default function JournalPage({ initData }: JournalPageProps) {
                     <div className={`journal-editor-pane ${mobileView === "list" ? "mobile-hidden" : ""}`}>
                         {selectedEntry ? (
                             <>
-                                <span className="journal-editor-timestamp">
-                                    {formatEditorTimestamp(selectedEntry.updatedAt)}
+                                <span
+                                    className="journal-editor-timestamp"
+                                    title={`Created ${formatEditorTimestamp(selectedEntry.createdAt)}`}
+                                >
+                                    Edited {formatEditorTimestamp(selectedEntry.updatedAt)}
                                 </span>
-                                <textarea
-                                    className="journal-textarea"
-                                    value={content}
-                                    maxLength={5000}
-                                    placeholder="Start typing…"
+                                <input
+                                    type="text"
+                                    className="journal-title-input"
+                                    value={titlePart}
+                                    placeholder="Title"
+                                    maxLength={200}
                                     autoFocus
-                                    onChange={(e) => setContent(e.target.value)}
+                                    onChange={(e) => setContent(joinContent(e.target.value, bodyPart))}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            bodyRef.current?.focus();
+                                        }
+                                    }}
+                                />
+                                <textarea
+                                    ref={bodyRef}
+                                    className="journal-textarea"
+                                    value={bodyPart}
+                                    maxLength={remainingBodyLength}
+                                    placeholder="Start typing…"
+                                    onChange={(e) => setContent(joinContent(titlePart, e.target.value))}
                                 />
                             </>
                         ) : (

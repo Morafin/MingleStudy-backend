@@ -5,6 +5,7 @@ import StudyCalendar from "./components/StudyCalendar";
 import GroupsPage from "./components/GroupsPage";
 import JournalPage from "./components/JournalPage";
 import LibraryPage from "./components/LibraryPage";
+import GazettePage from "./components/GazettePage";
 import SettingsPage from "./components/SettingsPage";
 import WeeklyTimetable from "./components/WeeklyTimetable";
 import LiveClock from "./components/LiveClock";
@@ -21,6 +22,7 @@ import "./styles/timetable.css";
 import "./styles/schedule-editor.css";
 import "./styles/journal.css";
 import "./styles/library.css";
+import "./styles/gazette.css";
 import "./styles/settings.css";
 
 interface TelegramWebApp {
@@ -53,7 +55,7 @@ declare global {
     interface Window { Telegram?: { WebApp?: TelegramWebApp } }
 }
 
-type View = "dashboard" | "groups" | "journal" | "library" | "settings";
+type View = "dashboard" | "groups" | "journal" | "library" | "gazette" | "settings";
 type ThemePreference = "system" | "light" | "dark";
 
 const THEME_STORAGE_KEY = "minglestudy-theme-preference";
@@ -182,6 +184,11 @@ function App() {
         setView("library");
     };
 
+    const goToGazette = () => {
+        setEditingProfile(false);
+        setView("gazette");
+    };
+
     const goToSettings = () => {
         setEditingProfile(false);
         setView("settings");
@@ -197,6 +204,7 @@ function App() {
             onGroupsClick={goToGroups}
             onJournalClick={goToJournal}
             onLibraryClick={goToLibrary}
+            onGazetteClick={goToGazette}
             onSettingsClick={goToSettings}
         />
     );
@@ -252,6 +260,9 @@ function App() {
                     )}
                     {view === "library" && (
                         <LibraryPage initData={initData} />
+                    )}
+                    {view === "gazette" && (
+                        <GazettePage initData={initData} />
                     )}
                     {view === "settings" && (
                         <SettingsPage
