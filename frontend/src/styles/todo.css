@@ -1,0 +1,147 @@
+.dashboard-grid-span {
+    grid-column: 1 / -1;
+}
+
+.todo-widget {
+    margin-top: 4px;
+}
+
+.todo-add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.todo-add-input {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 14px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--card);
+    color: var(--ink);
+    font: inherit;
+    font-size: 14px;
+}
+
+.todo-add-input:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.todo-add-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    flex-shrink: 0;
+    border: none;
+    border-radius: 10px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+    transition: opacity 0.1s ease, transform 0.1s ease;
+}
+
+.todo-add-button svg {
+    width: 18px;
+    height: 18px;
+}
+
+.todo-add-button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.todo-add-button:active:not(:disabled) {
+    transform: scale(0.92);
+}
+
+.todo-row {
+    gap: 12px;
+}
+
+.todo-row-last {
+    border-bottom: none;
+}
+
+.todo-checkbox {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: 1.5px solid var(--line);
+    border-radius: 50%;
+    background: transparent;
+    color: #ffffff;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease, transform 0.1s ease;
+}
+
+.todo-checkbox svg {
+    width: 13px;
+    height: 13px;
+}
+
+.todo-checkbox.is-checked {
+    background: var(--accent);
+    border-color: var(--accent);
+}
+
+.todo-checkbox:active {
+    transform: scale(0.88);
+}
+
+.todo-text {
+    flex: 1;
+    min-width: 0;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.15s ease;
+}
+
+.todo-text.is-completed {
+    color: var(--ink-soft);
+    text-decoration: line-through;
+}
+
+.todo-delete {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    color: var(--ink-soft);
+    padding: 0;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.12s ease;
+}
+
+.todo-delete svg {
+    width: 14px;
+    height: 14px;
+}
+
+.todo-delete:active {
+    opacity: 1;
+}
+
+.todo-empty {
+    padding: 20px 4px;
+    text-align: center;
+    color: var(--ink-soft);
+    font-size: 13px;
+}

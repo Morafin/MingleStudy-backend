@@ -1,5 +1,6 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { Analytics } from "@vercel/analytics/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "./styles/global.css";
 import App from "./App";
@@ -20,5 +21,6 @@ createRoot(document.getElementById("root")!).render(
         <QueryClientProvider client={queryClient}>
             <App />
         </QueryClientProvider>
+        <Analytics />
     </StrictMode>,
 );

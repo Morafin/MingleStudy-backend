@@ -302,3 +302,18 @@
         height: 22px;
     }
 }
+
+.sidebar-nav-label {
+    display: block;
+    padding: 4px 10px 8px;
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--ink-soft);
+    opacity: 0.75;
+}
+
+.sidebar-nav-label-secondary {
+    margin-top: 18px;
+}

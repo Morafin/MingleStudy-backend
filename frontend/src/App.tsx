@@ -10,9 +10,11 @@ import SettingsPage from "./components/SettingsPage";
 import WeeklyTimetable from "./components/WeeklyTimetable";
 import LiveClock from "./components/LiveClock";
 import Toast from "./components/Toast";
+import TodoWidget from "./components/TodoWidget";
 import { getMyProfile, joinViaInvite, type StudentProfile } from "./data/profileApi";
 import { haptics } from "./data/haptics";
 
+import "./styles/todo.css";
 import "./styles/global.css";
 import "./styles/sidebar.css";
 import "./styles/profile-form.css";
@@ -250,6 +252,7 @@ function App() {
                                 <StudyCalendar initData={initData} />
                                 <WeeklyTimetable initData={initData} universityName={activeProfile.university?.name} />
                             </div>
+                            <TodoWidget initData={initData} />
                         </>
                     )}
                     {view === "groups" && (

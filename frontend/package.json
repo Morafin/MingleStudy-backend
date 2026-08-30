@@ -13,6 +13,7 @@
   "dependencies": {
     "@tanstack/react-query": "^5.102.4",
     "@twa-dev/sdk": "^8.0.2",
+    "@vercel/analytics": "^2.0.1",
     "pdfjs-dist": "^4.6.82",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
